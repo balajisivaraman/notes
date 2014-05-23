@@ -1,0 +1,39 @@
+#+TITLE: Notes on Types and Programming Languages
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb}
+#+LATEX_HEADER: \usepackage{fullpage}
+#+LATEX_HEADER:\title{Notes on Types and Programming Languages}
+* CHAPTER 1 - INTRODUCTION
+** TYPES IN COMPUTER SCIENCE
+*** Formal Methods
+**** They ensure that a system behaves according to some specification.
+**** TODO [#C] Examples include Hoare Logic, alegebraic specification languages, modal logic and denotational semantics.
+**** Aforementioned are extremely cumbersome and require a great deal of sophistication on the part of programmers.
+*** Lightweight Formal Methods
+**** They form the other end of the spectrum
+**** Checkers built into compilers, linkers etc.
+***** A good example can be a model checker that can detect errors in finite state systems like chip designs or communication protocols.
+***** Run-time monitoring is growing in popularity. Collection of techniques that allow a system to dynamically detect defective components.
+*** Type Systems (LFM)
+***** By far the best established _lightweight formal methods_ are *type systems*.
+
+      /A type system is a tractable syntactic method for proving the absence of certain program behaviours by classifying phrases according to the kinds of values they compute./
+***** Type systems are tools for _reasoning about programs_.
+****** In general terms, type systems (or theory) refers to a much broader field of study in logic, mathematics, and philosophy.
+******* TODO [#C] TS in this sense were first formalized in early 1900s as a way of avoiding logical paradoxes such as Russel's (Russel, 1902).
+******* In the 20th century, they became tools in logic, especially proof theory. (Gandy, 1976 and Hindley, 1997)
+******* TODO [#C] Landmarks include Russel's /original ramified theory of types/ (Whitehead and Russell, 1910), Ramsey's /simple theory of types/ (1925) - the basis of Church's simply typed lambda-calculus (1940) - Martin Lof's /constructive type theory/ (1973, 1984), and Berardi, Terlouw, and Barendregt's /pure type systems/ (Berardi, 1988; Terlouw, 1989; Barendregt, 1992)
+**** Even in computer science, there are two branches of study of type systems:
+***** Practical concerns their implementation and usage in programming languages, focus of TAPL.
+***** TODO [#A] Abstract focuses on connections between various "pure typed lambda-calculi" and varities of logic, via the /Curry-Howard correspondence/ (Chapter 9, Section 4)
+**** Type systems are a *static approximation* of the runtime behaviour of the terms of a program.
+**** Type systems are *compositional*. As in the type of an expression is only dependent on the types of its subexpression.
+**** A type system is just a type system. The word *static* is added explicitly only to differentiate from the kind of /dynamic or latent typing/ found in languages like /Scheme/ (Sussman and Steele, 1975; Kelsey, Clinger and Rees, 1998; Dybvig, 1996).
+***** In the latter, _run-time type tags_ are used to differentiate different kinds of structures in the heap.
+***** That's why people say *dynamically typed* is a misnomer. A more appropriate term would be *dynamically checked*.
+**** Because they are static, as in "BEFORE A PROGRAM IS ACTUALLY RUN" - they are fundamentally safe: they don't allow certain behaviours which may be acceptable when the program is actually executed.
+***** This tradeoff is the driving forced behing type system research. To allow more programs to be typed by assigning more accurate types to their parts.
+**** The bad behaviours eliminated by a type system are obviously called _run-time type errors_.
+**** A full proof that a program meets some arbitrary spec can be embedded in the type annotations itself. If so, the type checker essentially becomes a /proof checker/.
+***** Tech like Extended Static Checking (Detlefs, Leino, Nelson, and Saxe, 1998)
