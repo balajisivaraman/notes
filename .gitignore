@@ -1,2 +1,7 @@
 *.pdf
 *.tex
+*.aux
+*.lof
+*.lot
+*.log
+*.toc
