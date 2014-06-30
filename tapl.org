@@ -1,14 +1,18 @@
 #+TITLE: Notes on Types and Programming Languages
+#+EMAIL: sivaraman DOT balaji AT gmail DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
 #+LATEX_CLASS: article
 #+LATEX_CLASS_OPTIONS: [a4paper]
-#+LATEX_HEADER: \usepackage{amssymb}
-#+LATEX_HEADER: \usepackage{fullpage}
-#+LATEX_HEADER:\title{Notes on Types and Programming Languages}
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
 * CHAPTER 1 - INTRODUCTION
 ** TYPES IN COMPUTER SCIENCE
 *** Formal Methods
 **** They ensure that a system behaves according to some specification.
-**** TODO [#C] Examples include Hoare Logic, alegebraic specification languages, modal logic and denotational semantics.
+**** TODO [#C] Examples include Hoare Logic, algebraic specification languages, modal logic and denotational semantics. [fn:1]
 **** Aforementioned are extremely cumbersome and require a great deal of sophistication on the part of programmers.
 *** Lightweight Formal Methods
 **** They form the other end of the spectrum
@@ -16,24 +20,91 @@
 ***** A good example can be a model checker that can detect errors in finite state systems like chip designs or communication protocols.
 ***** Run-time monitoring is growing in popularity. Collection of techniques that allow a system to dynamically detect defective components.
 *** Type Systems (LFM)
-***** By far the best established _lightweight formal methods_ are *type systems*.
+**** By far the best established _lightweight formal methods_ are *type systems*.
 
-      /A type system is a tractable syntactic method for proving the absence of certain program behaviours by classifying phrases according to the kinds of values they compute./
-***** Type systems are tools for _reasoning about programs_.
-****** In general terms, type systems (or theory) refers to a much broader field of study in logic, mathematics, and philosophy.
-******* TODO [#C] TS in this sense were first formalized in early 1900s as a way of avoiding logical paradoxes such as Russel's (Russel, 1902).
-******* In the 20th century, they became tools in logic, especially proof theory. (Gandy, 1976 and Hindley, 1997)
-******* TODO [#C] Landmarks include Russel's /original ramified theory of types/ (Whitehead and Russell, 1910), Ramsey's /simple theory of types/ (1925) - the basis of Church's simply typed lambda-calculus (1940) - Martin Lof's /constructive type theory/ (1973, 1984), and Berardi, Terlouw, and Barendregt's /pure type systems/ (Berardi, 1988; Terlouw, 1989; Barendregt, 1992)
+     /A type system is a tractable syntactic method for proving the absence of certain program behaviors by classifying phrases according to the kinds of values they compute./
+**** Type systems are tools for _reasoning about programs_.
+***** In general terms, type systems (or theory) refers to a much broader field of study in logic, mathematics, and philosophy.
+****** TODO [#C] TS in this sense were first formalized in early 1900s as a way of avoiding logical paradoxes such as Russel's (Russel, 1902).
+****** In the 20th century, they became tools in logic, especially proof theory. (Gandy, 1976 and Hindley, 1997)
+****** TODO [#C] Landmarks include Russel's /original ramified theory of types/ (Whitehead and Russell, 1910), Ramsey's /simple theory of types/ (1925) - the basis of Church's simply typed lambda-calculus (1940) - Martin Lof's /constructive type theory/ (1973, 1984), and Berardi, Terlouw, and Barendregt's /pure type systems/ (Berardi, 1988; Terlouw, 1989; Barendregt, 1992)
 **** Even in computer science, there are two branches of study of type systems:
 ***** Practical concerns their implementation and usage in programming languages, focus of TAPL.
-***** TODO [#A] Abstract focuses on connections between various "pure typed lambda-calculi" and varities of logic, via the /Curry-Howard correspondence/ (Chapter 9, Section 4)
-**** Type systems are a *static approximation* of the runtime behaviour of the terms of a program.
-**** Type systems are *compositional*. As in the type of an expression is only dependent on the types of its subexpression.
-**** A type system is just a type system. The word *static* is added explicitly only to differentiate from the kind of /dynamic or latent typing/ found in languages like /Scheme/ (Sussman and Steele, 1975; Kelsey, Clinger and Rees, 1998; Dybvig, 1996).
+***** TODO [#A] Abstract focuses on connections between various "pure typed lambda-calculi" and varieties of logic, via the /Curry-Howard correspondence/ [fn:2]
+**** Type systems are a *static approximation* of the runtime behavior of the terms of a program.
+**** Type systems are *compositional*. As in the type of an expression is only dependent on the types of its sub-expression.
+**** A type system is just a type system. The word *static* is added explicitly only to differentiate from the kind of /dynamic or latent typing/ found in languages like /Scheme/.[fn:3]
 ***** In the latter, _run-time type tags_ are used to differentiate different kinds of structures in the heap.
 ***** That's why people say *dynamically typed* is a misnomer. A more appropriate term would be *dynamically checked*.
-**** Because they are static, as in "BEFORE A PROGRAM IS ACTUALLY RUN" - they are fundamentally safe: they don't allow certain behaviours which may be acceptable when the program is actually executed.
-***** This tradeoff is the driving forced behing type system research. To allow more programs to be typed by assigning more accurate types to their parts.
-**** The bad behaviours eliminated by a type system are obviously called _run-time type errors_.
+**** Because they are static, as in "BEFORE A PROGRAM IS ACTUALLY RUN" - they are fundamentally safe: they don't allow certain behaviors which may be acceptable when the program is actually executed.
+***** This trade-off is the driving forced behind type system research. To allow more programs to be typed by assigning more accurate types to their parts.
+**** The bad behavior's eliminated by a type system are obviously called _run-time type errors_.
 **** A full proof that a program meets some arbitrary spec can be embedded in the type annotations itself. If so, the type checker essentially becomes a /proof checker/.
-***** Tech like Extended Static Checking (Detlefs, Leino, Nelson, and Saxe, 1998)
+***** Tech like Extended Static Checking [fn:4]
+*** What Type Systems Are Good For
+**** Detecting Errors
+***** The strength of this behavior's depends on the expressiveness of the type system.
+***** Even in simple numerical calculations can be bettered by using refined type systems supporting /dimension analysis/. [fn:5]
+***** Expressive type systems provide "tricks" for encoding structure of information in its types.
+***** As a result of this benefit, types are also invaluable in /maintenance/ of a program.
+**** Abstraction
+***** The interface itself is /the type of the module/ providing a partial contract to the implementors and users.
+**** Documentation
+***** Major benefit is that types-as-documentation can *never* go out-of-date.
+**** Language Safety
+***** /A safe language is on that protects its own abstractions./
+***** Language safety is not the same as static type safety, though it can be /achieved/ using static checking or by run-time checks, like throwing exceptions for example.
+***** Type safety *does not* guarantee run-time safety. For example, all type-safe languages perform array-bounds checking dynamically.
+****** Static elimination of array-bounds is a long-standing goal of type-system design. The principle is the use of *dependent types*. [fn:6][fn:7]
+***** Some statically checked languages choose to provide operations that are /unsound/ in nature. For example, the downcast operation in Java. [fn:8] In such a case, language safety comes from checking each use of such a construct dynamically.
+***** Cardelli (1996) distinguishes between /trapped/ and /untrapped/ errors.
+****** Trapped can be thought of like checked exceptions in Java. You can handle them in your code properly.
+****** Untrapped can continue with the computation and things could go kaboom.
+***** "A safe language is completely defined by its programmer's manual." Once you have the language definition, you can understand every program written in that language.
+***** A well typed program will yield the correct behavior in any implementation of the language spec. Obvious example is Java.
+**** Efficiency
+***** Type-safe languages are efficient because they eliminate some of the needs for dynamic checking.
+****** For example, the need to check for mathematical operations in integer and real valued ones.
+***** Today, most high-performance compilers use typechecker information gathered in optimization and code-generation phases.
+*** Type Systems and Language Design
+**** Both should go hand-in-hand. You cannot retrofit a type system onto a dynamically checked language.
+**** Because type systems are the foundation of static languages.
+**** Of course, this leads to a trade-off between type annotations and verbosity.
+#+LATEX: \newpage
+* CHAPTER 2 - MATHEMATICAL PRELIMINARIES
+** Sets, Relations and Functions
+**** A set is said to be /countable/ if its elements can be placed in one-to-one correspondence with the natural numbers. This could mean /countably finite or infinite/.
+**** N-Place Relation: We say that the elements \(s_1 \in S_1\) through \(s_n \in S_n\) are /related/ by \(R\) if \((s_1,...,s_n)\) is an element of \(R\).
+**** A one-place relation on a set \(S\) is called a /predicate/ on \(S\). We say that \(P\) is true of an element \(s \in S\) if \(s \in P\). We represent this as \(P(s)\).
+***** For example if we say that the predicate represents the set of odd numbers. Then \(P\) is true for the numbers \((1,3,5..).\) because these numbers belong to \(P\), which here represents the odd number set.
+**** A two-place relation on sets \(S\) and \(T\) is called a /binary relation/. It is often written as \(s\text{ }R\text{ }t\) instead of \((s,t) \in R\).-
+**** Three or more-place relations are often written using "mixfix" syntax, where the elements in the relation are separated using a sequence of symbols that jointly constitute the name of the relation.
+***** Eg: The typing relation \(\Gamma \vdash s \text{ } \colon T\) means "the triple \((\Gamma,s,T)\) is in the typing relation." [fn:9]
+**** A relation \(R\) on sets \(S\) and \(T\) is called a /partial function/ from \(S\) to \(T\) if, whenever \((s,t_1) \in R\) and \((s,t_2) \in R\), we have \(t_1 = t_2\). This means that every \(s \in S\) maps to one and only one \(t \in T\).
+***** If, in addition, \(dom(R) = S\), then \(R\) is called a /total function/ (or just /function) from \(S\) to \(T\).
+***** All functions are relations but the opposite is not true.
+**** We write \(f(x) \uparrow\) to mean \(f\) is undefined on \(x\). And \(f(x) \downarrow\) to mean that it is defined.
+**** We need to distinguish between functions that may /fail/ on some inputs. Failure is a legitimate, observable result from divergence. A function which fails may be partial (i.e. it may diverge) or total (it must always return a result or explicitly fail).
+***** We write \(f(x) = fail\) when \(f\) returns a failure on the input \(x\).
+***** Formally, a function which can fail is actually a function from \(S\) to \(T \cup \{fail\}\).
+** Ordered Sets
+**** A relation \(R\) is reflexive if it maps every element of \(S\) to itself.
+**** \(R\) is symmetric if \(s\) \(R\) \(t\) implies \(t\) \(R\) \(s\) \forall  \(s\) and \(t\) \in \(S\).
+**** \(R\) is transitive if \(s\) \(R\) \(t\) and \(t\) \(R\) \(u\) implies \(s\) \(R\) \(u\).
+**** \(R\) is anti-symmetric if \(s\) \(R\) \(t\) and \(t\) \(R\) \(s\) together imply that \(s = t\).
+**** A reflexive and transitive relation is called a pre-order on S.
+***** Pre-orders are written as \(\leq\) or \(\sqsubseteq\).
+***** A pre-order that is also anti-symmetric is called a /partial order/.
+***** A partial order \leq is called a /total order/ if it also has the property that, for each \(s\) and \(t\) in \(S\), either \(s \leq t\) or \(t \leq s\).
+**** A reflexive, transitive and symmetric relation in a set \(S\) is called an /equivalence/.
+#+LATEX: \newpage
+* FOOTNOTES
+[fn:1] Page No. 1 of TAPL
+[fn:2] Curry-Howard Correspondence can be found in Chapter 9, Section 4 of TAPL
+[fn:3] Sussman and Steele, 1975; Kelsey, Clinger and Rees, 1998; Dybvig, 1996
+[fn:4] Detlefs, Leino, Nelson, and Saxe, 1998
+[fn:5] Kennedy, 1994
+[fn:6] Dependent Types can be found in Chapter 30, Section 5 of TAPL
+[fn:7] Xi and Pfenning (1998, 1999) describe recent advances in this area
+[fn:8] See Chapter 15, Section 5 of TAPL for Java Casting
+[fn:9] See Chapter 9 of TAPL for the typing relation
