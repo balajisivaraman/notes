@@ -28,3 +28,58 @@
 *** Pairs are represented using braces. - (Int, Int)
 *** As Tony Morris put it, all haskell functions take one argument, just like the lambda calculus. As in, any haskell function that you think takes multiple arguments is actually curried. So it is one fn taking one argument, whose output is the input to the next which takes one argument and so on.
 *** Lists can be used by putting the type of the thing that you want within square brackets. - [Int]
+* Week 2
+** Enumeration Types
+   You can create your own enumeration types in Haskell.
+   #+BEGIN_SRC haskell
+     data Thing = Shoe
+                | Ship
+                | SealingWax
+                | Cabbage
+                | King
+                deriving Show
+   #+END_SRC
+   This declares a new *type* called Thing, with five *data constructors*, which are the only *values* of type Thing.
+   We can now write fns on Things, using pattern matching like last week.
+   `Thing` is an *enumeration type*, similar to those provided by other languages such as Java or C++.  However, enumerations are actually only a special case of Haskell's more general *algebraic data types*.
+   #+BEGIN_SRC haskell
+     data FailableDouble = Failure
+                         | OK Double
+                         deriving Show
+   #+END_SRC
+   In this case, `Failure` is a value of type FailableDouble. However, `OK` on its own is not a value. We need to give it a `Double` value to make it a value fo FailableDouble.
+   Data constructors can have more than one argument.
+   #+BEGIN_SRC haskell
+     -- Store a person's name, age, and favourite Thing.
+     data Person = Person String Int Thing
+                 deriving Show
+   #+END_SRC
+   Notice how the type constructor and data constructor are both named `Person`, but they inhabit different namespaces and are different things.  This idiom (giving the type and data constructor of a one-constructor type the same name) is common, but can be confusing until you get used to it.
+
+   *One final note: type and data constructor names must always start with a capital letter; variables (including names of functions) must always start with a lowercase letter.  (Otherwise, Haskell parsers would have quite a difficult job figuring out which names represent variables and which represent constructors).*
+
+** Pattern Matching
+   Fundamentally, pattern-matching is about taking apart a value by *finding out which constructor* it was built with.  This information can be used as the basis for deciding what to do---indeed, in Haskell, this is the *only* way to make a decision
+   In general, the following grammar defines what can be used as a
+   pattern:
+   #+BEGIN_SRC haskell
+     pat ::= _
+          |  var
+          |  var @ ( pat )
+          |  ( Constructor pat1 pat2 ... patn )
+   #+END_SRC
+
+   Pat-matching can be done using `case` expressions.
+
+   #+BEGIN_SRC haskell
+     excase :: Int
+     exCase = case "Hello" of
+       [] -> 3
+       ('H':s) -> length s
+       _ -> 7
+   #+END_SRC
+
+   Pat-matching directly after the function name is just syntactic-sugar for a `case` expression.
+
+** Recursive Data Types
+   Data types can be *recursive*. That is, they can refer to themselves in the data constructor. Lists are the usual example of course.
