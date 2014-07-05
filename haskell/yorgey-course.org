@@ -1,0 +1,30 @@
+* Week 1
+** Haskell is a *lazy functional* programming language.
+*** Functional - Fns are first-class values.
+*** Programs are centered around evaluating expressions, instead of executing instructions.
+*** Haskell expressions are always *referentially transparent*. Mutation is not possible in the language itself. Once you initialize a variable with a value, that's it. It cannot be changed. Therefore, it is a language without side-effects.
+*** Haskell expressions are never evaluated until their results are *actually needed*. Evaluation is deferred as much as possible.
+**** As Tony Morris demonstrated in the foldL and foldR presentation, this means it is possible to work with infinite lists in Haskell, taking how ever many values we need out of an infinite list.
+**** Lazy evaluation also enables compositional style of programming without any overhead. All the intermediate values need not be fully evaluated to produce the final result.
+***** For example, if we are applying a sequence of map operations on a 100-element list, but only taking the first 5 elements at the end, the intermediate steps don't apply the map operation for all 100-elements, they are applied only for the 5 that we need. This is unlike languages we are familiar with like Java.
+** Types
+*** You get all advantages of static typing without the coding overhead. As in, your programs don't need to be annonated as much as in verbose languages. The inference is really powerful. Most programs look like they were written in a dynamic language.
+*** They serve as documentation on their own. Just looking at a function and what it does is enough to know everything about it.
+*** Parametricity allows you to do *wholemeal programming*. As in you can define functions that work generically and then use them wherever you want. Instead of defining functions for every type of element that you want.
+** Syntaxes We Learned
+*** Int - Machine-sized integers. Memory allocated and largest/smalles values depends on whether it is a 32 or 64-bit machine.
+*** Integer - Value possible depends on amount of memory in the machine.
+*** Float & Double - Usual. Single and double-precision numbers.
+*** Boolean - True and False are types.
+*** String and Char - String is nothing but syntactic sugar for list of characters. So you can use all the operations you would normally on a list.
+*** Pattern Matching and Guards are the best way to define functions.
+**** Pattern Matching - We are already familiar with.
+**** Guards
+     #+BEGIN_SRC haskell
+       hailstone n
+         | n `mod` 2 == 0 = n `div` 2
+         | otherwise      = 3*n + 1
+     #+END_SRC
+*** Pairs are represented using braces. - (Int, Int)
+*** As Tony Morris put it, all haskell functions take one argument, just like the lambda calculus. As in, any haskell function that you think takes multiple arguments is actually curried. So it is one fn taking one argument, whose output is the input to the next which takes one argument and so on.
+*** Lists can be used by putting the type of the thing that you want within square brackets. - [Int]
