@@ -1,0 +1,44 @@
+#+TITLE: Notes on Formal Semantics of Programming Languages
+#+EMAIL: sivaraman DOT balaji AT gmail DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [12pt,a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \setromanfont{Liberation Serif}
+#+LATEX: \newpage
+* Basic Set Theory
+** Sets
+*** Sets and Properties
+**** Sometimes a set is determined by a property.  For example: \(X = {x \, | \, P(x)}\)
+**** When set theory was first invented, it was thought that any propery \(P(x)\) determined a set.
+***** This gave way to Russell's Paradox (Bertrand Russell).
+****** If we consider a property like \(x \notin x\), and if we assume that properties determine sets, just as thought above, then we can form the set: \(R = {x \text | \text x \notin x}\).
+****** Either \(R \in R\) or not. If we assume the former, then in order for R to qualify as an element of R, from the defn. of the set, \(R \notin R\). So we end up asserting both something and its negation - a contradiction.
+*** Construction on Sets
+**** *Comprehension*: If \(X\) is a set and \(P(x)\) is a property, we can form the set:
+     #+BEGIN_LATEX
+     \medskip
+
+     \centerline{\{\(x \in X \, | \, P(x)\)\}}
+     #+END_LATEX
+     which is another way of writing:
+     #+BEGIN_LATEX
+     \medskip
+
+     \centerline{\{\(x \, | \, x \in X \, \& \, P(x)\)\}}
+     #+END_LATEX
+**** *Powerset*: Set of all subsets of a set. Formal definition is: Set of all Ys such that Y is a subset of X.
+
+     #+BEGIN_LATEX
+     \medskip
+
+     \centerline{\(Pow(X) = {Y \, | \, Y \subseteq X}\)}
+     #+END_LATEX
+**** *Indexed sets*: Suppose \(I\) is a set and that for any \(i \in I\) there is a unique object x_i, maybe a set itself. Then
+     #+BEGIN_LATEX
+     \medskip
+
+     \centerline{\({x_i \, | \, i \in I}\)}
+     #+END_LATEX
+     is a set. The elements x_i are said to be /indexed/ by the elements \(i \in I\). Enums are an exampled of index sets. Index sets come with a surjective function from the original set to the index set.
