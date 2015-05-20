@@ -1,0 +1,6 @@
+* [#A] use-package-verbose - Profiling Emacs Startup time. Must-add.
+* [#A] Learn more about autoloads.
+* bind* helps you define keybindings that cannot be overridden anywhere in Emacs.
+* Should dependent packages be used in init blocks or config blocks?
+* Useful packages mentioned that need to be checked out
+** ggtags
