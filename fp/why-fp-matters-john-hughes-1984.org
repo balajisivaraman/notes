@@ -1,0 +1,27 @@
+* FP AND STRUCTURED PROGRAMMING
+** Lack of GOTO is not an advantage of SP as such. *Modular Design* is.
+** Latter leads to ability to design smaller modules, compose modules for reusability and test modules in isolation effectively.
+** Modular Design depends on how we can decompose the problem into smaller sub-problems and how we can later combine them. The ways in which we can divide the problem directly affect how we can combine them later.
+** Without new conceptual ways of decomposing the problem, our ability to solve the problem will be very limited.
+** Key to FP is the two new glues that is provided. (Higher Order Functions and Lazy Evaluation)
+* ADVANTAGES
+** NO SIDE EFFECTS
+*** More generally, functional programs contain no side-effects at all. A function call can have no effect other than to compute its result.
+*** This eliminates a major source of bugs, and also makes the order of execution irrelevant - since no side-effect can change the value of an expression, it can be evaluated at any time.
+*** Referential Transparency is gained, with the advantage that programmers need not worry about flow of control.
+** HOF
+*** Leads to better modularity and reusability.
+*** When you create a new generic datatype, the first thing you should do is build HOF on them to better reason about their structures.
+** LAZINESS
+*** This is what allows us compose large programs/functions with each other. If each building block was eagerly evaluated, it might require a lot of memory to be processed before the next building block can be called. Laziness takes this problem away.
+*** Build up lazy lists of computed values until some condition is met to retrieve the result that we want. (Example: Square Root approximation, Numerical Differentiation)
+*** Even within those problems, look for repeating patterns that can be abstracted out as generic functions.
+*** Why cannot we use infinite loops and breaking conditions, instead of recursive infinite loops to achieve the same result as differentiation and integration? Needs to be tried out.
+*** The answer to the above question is that we will have to fold everything into one monolithic chunk of code. This results in greatly reduced modularity.
+*** With lazy evaluation, we can have separate lazily evaluated functions that can be combined to get the exact result that we want.
+*** This leads to better algorithms since we can replace each individual unit of the pipeline independent of the other.
+*** Not only replace individual units, we can optimize them further as well. As demonstrated in the Differentiation, Integration and the AI examples.
+*** If we went with the monolithic loop, we would always have to go within it to replace the parts we want, making maintenance also difficult.
+*** *Making such changes is easy in a program as modular as this one. As we remarked above, since the program depends crucially for its efficiency on an interaction between maximise, the last function in the chain, and gametree, the first, it can only be written as a monolithic program without lazy evaluation. Such a program is hard to write, hard to modify, and very hard to understand.*
+*** Lazy Evaluation is perhaps the most powerful glue functional programmers possess. One should not obstruct access to such a vital tool.
+** We are also using a lot of function composition along with all the other above advantages as well. Function Composition is one of the base fundamental units in FP.
