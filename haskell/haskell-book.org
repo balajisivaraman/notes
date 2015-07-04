@@ -1,0 +1,47 @@
+* Chapter 1 - All You Need is Lambda
+** Pure FP is just the lambda calculus. Other languages add side effects, mutation and imperative step-wise encoding of instructions.
+** Lambda Calculus
+*** The lambda calculus has three basic components: expressions, variables and abstractions.
+*** An expression can be anything in the language: variable, function, abstraction (i.e. function declaration).
+*** The simplest expression is a single variable. On its own it does nothing other than specify an input to a function.
+*** Functions consist of two parts: the head and the body.
+**** The head consists of a lambda followed by a variable name, followed by the body of the function, which always produces a result.
+**** λ x . x -> Simplest function, also known as Identity. Similar to f(x) = x. But the latter can be called using name, while the former cannot.
+**** The head is eliminated immediately after the function is called since its only job is the bind variables to the value being passed.
+**** Then every variable is replaced by the value passed to the function, and the body of the function is applied to get the resulting value.
+** Beta Reduction
+*** The process of substituting variables in the body with their values is *Beta Reduction*.
+** Bound and Free Variables
+*** In λ x . xy, x is a bound variable and y is a free variable, since once BR is done, we have no way of knowing what to do with y.
+** Alpha Equivalence
+*** In λ x . x (the Identity Function), x has no meaning other than to bind a value. Therefore, In λ d . d, λ c . c, all mean the same thing.
+*** This is called Alpha Equivalence. Note that this can only be reasoned about bound variables, not free variables, since they're not defined only the enclosing lambda.
+** Multiple Arguments
+*** As Tony is fond of saying, each function in Haskell only accepts one argument. This comes from the spirit of the lambda calculus. If you want multiple arguments, you need multiple nested heads in the LC.
+*** This forumlation was originally discovered by Schonfinkel, but was expanded upon by Haskell Curry. That's why it is known as Currying.
+*** In normal order evalulation of lambda terms, if multiple terms are "outermost", we use the leftmost to pick what to reduce.
+*** If whatever got replaced in the body of is itself a lambda, it also cannot be reduced until it becomes the leftmost expression.
+*** If the variable is bound to a value but not used anywhere in the body, then it will be unconditionally tossed out since it doesn't matter.
+** Evaluation is Simplification
+*** There are multiple normal forms in the LC. (What are they?) But here we refer only to the *beta-normal form*, which is the form when you cannot beta reduce any of the terms any further. This necessarily need not be a simple, expressible value.
+*** The Identity Function: λx.x is in beta-normal form since it represents an abstraction that cannot be reduced any further.
+*** However, (λx.x)z is not in beta-normal form, since it needs to be beta-reduced by binding x := z.
+** Combinators
+*** A combinator is a lambda term with no free variables. They serve only to combine the arguments they're given.
+*** Combinators can take one or more functions as input, and return functions as outputs. This means they provide us with higher order functions and even some recursive functions.
+*** (.) and `flip` are combinators. Keep an eye out for them to understand better what they are.
+** Divergence
+*** Beta Reduction should normally result in a beta-normal expression. i.e. the reduction should ideally *converge* on a result.
+*** When this doesn't happen, we diverge. Divergence is the opposite of convergence.
+*** Infinite recursion is a classic example.
+*** This means that we never produce a meaningful result. This also leads to the discussion of totality, much later.
+** *Lambda Calculus is a formal system for expressing programs in terms of abstraction (FUNCTIONS) and applications (FUNCTION CALLS).*
+** Normal Order is the normal evaluation strategy in lambda calculi. This is how we solved our exercises. By binding the left most lambda to the first passed in argument.
+** Obviously this isn't how Haskell is evaluated. It is call by need.
+** Reading Resources
+*** Raul Rojas. A Tutorial Introduction to the Lambda Calculus
+    http://www.inf.fu-berlin.de/lehre/WS03/alpi/lambda.pdf
+*** Henk Barendregt; Erik Barendsen. Introduction to Lambda Calculus
+    http://www.cse.chalmers.se/research/group/logic/TypesSS05/Extra/geuvers.pdf
+*** Jean-Yves Girard; P. Taylor; Yves Lafon. Proofs and Types
+    http://www.paultaylor.eu/stable/prot.pdf
