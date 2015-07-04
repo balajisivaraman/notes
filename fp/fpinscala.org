@@ -1,0 +1,31 @@
+* Ch7 - Purely Functional Parallelism
+** Choosing Data Types and Functions (Building Blocks of our API)
+*** To attack any problem domain in a functional manner, first take a simple problem in that domain, and create data types for it. It need not be perfect or what you would otherwise use in the final solution. But creating data types often reveals something underlying about the domain itself that you wouldn't have thought of before.
+*** To parallelize something, you need multiple things to first happen. Then they can be parallelized.
+*** For example, using `foldLeft` to sum up a list of integers means it cannot be parallelized. However, splitting that list into two and summing it recursively, means those two separate computations can be parallelized if need be.
+*** Trivial examples can sometimes be counter-intuitive. But starting with trivial examples helps us attack the core problem statement in hand without having to worry about the extraneous details.
+*** In functional design, our goal is to achieve expressiveness not with mountains of special cases, but by build- ing a simple and composable set of core data types and functions.
+*** Rather than focusing on how this parallelism will ultimately be implemented and forcing ourselves to work with the implementation APIs directly (likely related to java.lang.Thread and the java.util.concurrent library), we’ll instead design our own ideal API as illuminated by our examples and work backward from there to an implementation.
+** Combining Parallel Computations
+*** In our API, `unit()` delays the side-effect of the parallel computation, while `get()` exposes it. Until `get` is invoked, we don't have to worry about the computation inside of `unit`.
+*** Therefore, we want to delay calling `get()` as much as possible. (LAZY EVALUATION) It shouldn't be invoked until we absolutely know we need the result right away. We want to be able to combine asynchronous computations without waiting for them to finish.
+*** Par.map2 Type Signature. We need two type parameters since we're taking two parallel computations that may be of different base types.
+    - Should map2 arguments be lazily evaluated?
+    - If map2 isn't strict, then arguments are evaluated left to right (scala default) and left tree is fully constructed before the right is even begun? NO-GO.
+    - If map2 is strict, but not evaluated immediately, we still have to construct a huge tree (that may not fit in memory) describing the entire computation. This can be huge for even trivial problem spaces.
+    - map2 should be lazy and begin execution of both sides in parallel, not giving any sort of priority to either side.
+    - Par.map2[A, B](a: Par[A], b: Par[B])(f: (A, B) => Par[C]): Par[C] -> This is wrong.
+    - Par.map2[A, B](a: => Par[A], b: => Par[B])(f: (A, B) => Par[C]): Par[C] -> This maybe right.
+** Explicit Forking
+*** If we further think about the problem statement, we don't always want to delay execution of map2. In the trivial case where we're mapping over two `units`, there is no sense in forking off a separate logical thread to do the computation.
+*** *That is, our current API is very inexplicit about when computations get forked off the main  thread—the programmer doesn’t get  to  specify where  this  forking  should occur.*
+*** def fork[A](a: => Par[A]): Par[A] - Make the forking explicit. This looks like a neat way to discover a lot of things about our problem domain.
+*** The above function signifies that the given Par should be run in a separate logical thread. This could be the most important thing we've learned about our problem domain so far.
+*** From the book,*
+*** *A function like fork solves the problem of instantiating our parallel computations too strictly, but more fundamentally it puts the parallelism explicitly under programmer control. We’re addressing two concerns here. The first is that we need some way to indicate that the results of the two parallel tasks should be combined. Separate from this, we have the choice of whether a particular task should be performed asynchronously. By keeping these concerns separate, we avoid having any sort of global policy for parallelism attached to map2 and other combinators we write, which would mean making tough (and ultimately arbitrary) choices about what global policy is best.*
+*** Par.map2(Par.fork(sum(l)), Par.fork(sum(r)))(_ + _) - Since `fork` is thunked and lazy, we don't need to make `map2` lazy anymore. The callers of our API can thunk the arguments if they want, but we don't need to force anything in that regard.
+*** def lazyUnit[A](a: => A): Par[A] = fork(unit(a)) -> This is a derived combinator, as opposed to a primitive combinator. `lazyUnit` doesn't care about how Par is implemented. It just knows Par through `fork` and `unit`.
+*** *This sort of indifference to representation is a hint that the operations are actually more general, and can be abstracted to work for types other than just Par. We’ll explore this topic in detail in part 3.*
+*** Doing the Computation - Should it be `fork` or `get` responsibility? If it is the former, then it is responsible for submitting tasks to an execution context and knowledge of the underlying thread system. If we do this, different parts of our application cannot use different threading implementations. If we put it in get, then the control is with the users of the API than us.
+*** *Originally we thought Par was a container from which we can retrieve a value that will get computed. Now we've realized that Par actually describes a parallel computation that needs to be run.*
+** Underlying Representation
