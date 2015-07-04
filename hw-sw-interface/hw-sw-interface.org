@@ -1,0 +1,35 @@
+* Section 0 - Introduction
+** Theme
+*** When computers began, everything was codified in bit sequences. These were passed as instructions to our primitive processors.
+*** But then people got excited and raised the level of abstraction to *Assembly Language*. This was reduced down to machine level bits by the Assembler.
+*** Beyond assembly language, people got even more excited and raised the level of abstraction to even higher-level languages like C.
+    User Program in C -> Compiler -> Assembly Code -> Assembler -> Machine Code
+*** Code Time -> Compile Time -> Run Time (When instructions are executed by the CPU)
+*** How does the hardware relate to the software we write?
+* Section 1 - Memory, Data and Addressing
+** Preliminaries
+*** There are a fixed number of registers in the CPU. They hold data.
+*** Instruction Cache holds the instructions to be executed.
+*** Data is moved from the memory (RAM) to registers, and moved back once processing is complete.
+*** Moving instructions to I-Cache is hardware controlled. We don't worry about that.
+*** Moving data from memory to registers and then back (as in loading data into registers) is program controlled, in system languages like C (and by the JVM maybe).
+*** Performance is not just about CPU speed. CPU <-> Memory BW can also limit performance. (Increasing all the time DDR -> DDR2 -> DDR3)
+*** Move less data b/w CPU and memory. i.e. Cache some of the data in the CPU cache for faster performance.
+** Memory Organization
+*** We already know this. 8 bits -> 1 byte. We can represent 00000000 -> 11111111 (0-255 in decimal & 00 - FF in hexadecimal).
+*** In C, we can begin a value with 0x to indicate it is a hexadecimal number.
+*** Memory organized as bytes (not bits). Programs refer to addresses.
+*** OS provides an *address space* private to each process. Program can modify its own data, but not of others. Duty of the OS to provides this security. Clobbering of this state is what leads to crashes and security holes.
+*** Machine has a word-size. This is also the nominal size of all integer values we use, including addresses.
+*** Till 64-bit, most machines used 32-bit (4-byte) words. Limits addresses to 4GB.
+*** 64-bit, 8-byte words is the current thing. Potential adddress space: 2^64 = 1.8 x 10^19 bytes (18EB - Exabytes)
+*** For backward compatibility, CPUs support different word sizes. 1, 2, 4, 8 bytes.
+*** The address of the word is the address of the first byte in the word.
+** Addresses and Data Representation
+*** Addr is a /location/ in memory. Pointer is a /data object/ which holds an address, which can be referenced.
+*** 1 byte can hold 8 bits, corresponding to 2 hexadecimal characters (00-FF).
+*** How should bytes within a multi-byte word be ordered? (Word here means 4-byte or 32-bit or 8-byte or 64-bit things.) Comes from Endianness  - Big Endian vs Little Endian. Read more about it in the textbook.
+**** Big Endian - Big End First - Most significant byte has lowest address.
+**** Little Endian - Little End First - Least significant byte has lowest address.
+*** x86 uses Little Endian.
+*** Little Endian is useful when you extend from 32 to 64 bits and further. You just add more 0s at the end. Whereas with Big Endian, you'll have to add more words with 0s at the beginning, which is more complex.
