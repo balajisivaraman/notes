@@ -1,0 +1,17 @@
+* Hyperlinks
+** To link to other parts of the same Org mode file, use CUSTOM_ID property and use the link #my-custom-id. This could be useful for taking notes and other stuff.
+** Different link types can be found in Org Manual pages 38 and 39.
+** C-c % pushes the current mark location onto the mark ring so that it can be returned to easily. C-c & moves to the last recorded position of the mark.
+** This could be a potentially very useful feature: Abbreviated links. Use linkword:tag and description to use these links.
+#+begin_src emacs-lisp
+  (setq org-link-abbrev-alist
+        '(("bugzilla"  . "http://10.1.2.9/bugzilla/show_bug.cgi?id=")
+          ("url-to-ja" . "http://translate.google.fr/translate?sl=en&tl=ja&u=%h")
+          ("google"    . "http://www.google.com/search?q=")
+          ("gmap"      . "http://maps.google.com/maps?q=%s")
+          ("omap"      . "http://nominatim.openstreetmap.org/search?q=%s&polygon=1")
+          ("ads"       . "http://adsabs.harvard.edu/cgi-bin/nph-abs_connect?author=%s&db_key=AST")))
+#+end_src
+* TODOs Items
+** C-c C-c to restart org mode for the current buffer. Must be done from a line with #+ item so that it is parsed.
+** C-c C-x o toggles the ordered property of the current item. Will be useful when working with tasks that need to be completed in order.
