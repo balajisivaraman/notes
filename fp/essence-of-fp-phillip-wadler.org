@@ -1,0 +1,60 @@
+* Problem with Pure Languages - Any simple change to a function requires us to change in all the places that call it. A lot of manual labour.
+* A monad is a triple (M,unitM,bindM) consisting of a type constructor M and a pair of polymorphic functions.
+#+begin_src haskell
+ unitM :: a -> Ma
+ bindM :: M a -> (a -> M b) -> M b
+#+end_src
+* The basic idea in converting a program to monadic form is this: a function of type a -> b is converted to one of type a -> M b.
+* \a->let b=ka in hb - By convention, `a` will double up as a type and value variable. So the above is both generic in `a`, and `a` can be bound as the value variable in subsequent expressions as well.
+* The three monad laws alluded to above simply insure that this form of composition is associative, and has unitM as a left and right identity.
+* Just as the type Value represents a value, the type M Value can be thought of as representing a computation. The purpose of unitM is to coerce a value into a computation; the purpose of bindM is to evaluate a computation, yielding a value.
+* Informally, unitM gets us into a monad, and bindM gets us around the monad. How do we get out of the monad? *In general, such operations require a more ad hoc design.* For our purposes, it will suffice to provide the following.
+  - showM ::  M Value -> String
+* Identity Monad:
+#+begin_src haskell
+  type I a = a
+
+  unitI :: a -> a
+  unitI a = a
+
+  bindI :: a -> (a -> a) -> a
+  bindI a k = k a
+
+  showI :: a -> a
+  showI a = show a
+#+end_src
+* If we replace the Identity monad in the interpreter, then we get the standard interpreter.
+* Error Monad (Option, Maybe, Either):
+#+begin_src haskell
+  data E a = Success a
+           | Error String
+
+  unitE :: a -> E a
+  unitE a =  Success a
+
+  errorE :: a -> E a
+  errorE s =  Error s
+
+  bindE :: E a -> (E a -> E b) -> E b
+  bindE (Success a) k = k a
+  bindE (Error s) k = Error s
+
+  showE :: E a -> a
+  showE (Success a) = "Success: " ++ show a
+  showE (Error s) = "Error: " ++s
+#+end_src
+* Now we can replace all the Wrongs in the basic Interpreter using the Error Monad.
+* If we rejig our Interpreter data types to accept positions of terms, we can create a Position Monad that gives the position along with the error information.
+#+begin_src haskell
+  type P a =  Position -> E a
+
+  unitP :: a -> p -> E a
+  unitP a = \p -> unitE a
+
+  errorP :: s -> p -> E a
+  errorP s = \p -> errorE (showposp ++ ":" ++ s)
+
+  bindP m k = \p -> m p 'bindE' (\x -> k x p)
+  showP m  = showE (m pos0)
+#+end_src
+* With Monads, we can just replace one monad for the other in the interpreter definition. In an impure language, we'll maintain a global map of positions or something, and we will need to refer it for the position. Here we have everything defined into the types for us.
