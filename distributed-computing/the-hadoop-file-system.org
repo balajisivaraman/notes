@@ -1,0 +1,103 @@
+#+TITLE: Notes on the Hadoop Distributed File System Paper
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* INTRODUCTION AND RELATED WORK
+** HDFS interface is patterned after the Unix File System, but faithfulness was compromised in favor of performance.
+** File system metadata and application data stored separately.
+** As in other distributed file systems, like PVFS [1][2], Lustre and GFS [3], HDFS stores metadata on a dedicated server, called the NameNode. Application data are stored on other servers called DataNodes.
+** Like GFS, file content is replicated on multiple data nodes for reliability.
+
+
+* ARCHITECTURE
+** NameNode
+*** Typically, one per cluster, even if there are thousands of data nodes.
+*** Files and directories are represented as inodes. File is split into large blocks (128MB typically, but selectable file-by-file) and replicated independently on many data nodes.
+*** Maintaines namespace tree (directory and file structure) as well as location of each file on data nodes.
+*** Client (typically a process wanting to run a MapReduce job) wanting to read asks name node for data nodes containing the file, and the data is then read from the node closest to the client.
+*** For writing, the client asks the NameNode to nominate 3 datanodes, and data is written in a pipeline fashion from data node closest to client.
+*** The inode data and the list of blocks belonging to each file comprise the meta- data of the name system called the *image*. Typically always kept in RAM.
+*** Persisted *image* (typically on the file system) is called *checkpoint*.
+*** Modification log of *image* is called *journal* (also on the file system).
+*** Namespace is duplicated on multiple servers for redundancy. During loss, it is re-created by reading the checkpoint and replaying the journal.
+** DataNode
+*** Each block replica represented by 2 files: first contains actual data, second contains metadata (checksums, generation stamp). Size of file on disk is the actual length of block, and not rounded up to block size like traditional FS.
+*** Namespace ID given to file system when formatted. Name Nodes identify data nodes in cluster using this ID. If it doesn't match, data node is rejected, thus maintaining system integrity.
+*** Storage ID given to data nodes on their first registration with name nodes. Used to identify a data node (instead of using IPs or ports).
+*** Block Report sent to Name Node containing block id, generation stamp and length of each block replica held. Sent immediately after registration and every hour.
+*** Heartbeats sent every 3 seconds (info like storage capacity, storage in use etc.). If no HB received by NN for 10 minutes, DN is considered down and blocks unavailable.
+*** NN does not directly call DNs. Commands (block replication on other nodes, block removal, shut down, send report) are sent as replies to heartbeats.
+** HDFS Client
+*** Abstraction of the HDFS interface. Supports typical commands like creation, modification and deletion of files and creation/deletion of directories. End applications typically don't know where files are or that they are distributed/replicated.
+*** For reads, asks NN for list of DNs containing replicas of blocks of file, then contacts DNs directly for getting them.
+*** For writes, asks NN to choose DNs for first block. Then creates pipeline from node-to-node and sends data. Then asks NN for each subsequent block and follows same process for them.
+*** Unlike conventional FS, HDFS provides API to get location of file block, so that operations can be scheduled near to blocks.
+** Image and Journal
+*** For each client transaction, the changes are first written to *journal*, and *journal* is flushed. Then only transaction is committed.
+*** Think of Checkpoint as Windows System Restores. They're never written to, always re-created from scratch during restart, by admin, or CheckPointNode.
+*** The Flush and Sync operation is batched so that multiple ops are committed together. Threads only need to ensure that their transaction has been saved.
+** CheckpointNode
+*** Can be additional role of NN. Usually runs on a different host to NN because has same memory requirements.
+*** Combines checkpoint and journal to create new checkpoint and empty journal.
+*** Creating new checkpoint means our journal can be truncated. As journal grows large, possibility of data loss increases.
+*** Creating perioding checkpoints (typically daily) is good practice. Also reduces startup time, since huge journal does not need to processed.
+** BackupNode
+*** Can be additional role of NN. Usually runs on a different host to NN because has same memory requirements.
+*** Similar to CPN but also maintains up to date namespace image on memory that is in-sync with the NN.
+*** Receives stream of journal transactions, saves to FS and then applies to in-memory image. Treated as journal store by NN.
+*** Can be considered read-only NN. Contains up-to-date file-system metadata, except location of actual blocks on DNs.
+*** Can be used as the persistent storage for the NN, thus relieving it of that responsibility.
+** Upgrades, File System Snapshots
+*** Snapshot created at admin's request during startup. Checkpoint merged with journal to create new CP and empty journal written to a new location.
+*** NN instructs DN to create snapshot during handshake.
+*** DN snapshot is created not by copying entire file structure, as that would require disk space doubling. Instead a copy of file structure is created and hard links are done to it. Block removal is then only a removal of the link.
+*** If upgrade fails, rollback is initiated. NN creates image from checkpoint. NN restores snapshot and deletes any block replicas created after snapshot-creation.
+*** If upgrade complete, admin can command system to abandon the snapshot, thus freeing up the disk space.
+*** Layout Version identifies which format of checkpoint, journal and actual block replica files are being used, available with both NN and DN.
+*** During startup each node compares its version with current version of software and updates if it is outdated. Mandatory snapshot is created after conversion when system restarts with newer version of format.
+*** This version upgrade/snapshot creation is an all-cluster effort to avoid data loss. For eg, if only NN is updated or rolled back, it will not detect block info sent by DN, and order deletion of all blocks.
+
+
+* FILE I/O OPERATIONS AND REPLICA MANGEMENT
+** File Read and Write
+*** Single-writer, multiple-reader model -> Once file is closed, bytes written cannot be modified. File can be read or re-opened for append.
+*** Client is granted lease of file, renewed through periodic heartbeats, revoked on file closure.
+*** Lease has soft limit and hard limit. After soft limit, another client can preempt and obtain it. After hard limit, HDFS will close file automatically and revoke lease.
+*** Each block gets a unique block ID assigned by NN, and NN also chooses 3 DNs to host the replica of the block. The DNs form a pipeline to minimize network bandwidth.
+*** Block transferred as network packets (typically 64KB), client does not typically wait for acknowledgment before pushing next packets.
+*** HDFS generates and stores checksums for each block of a file. These are read by the client to ensure against corruption of FS, network or client. Checksum sent by client along with block at the time for writing the file.
+*** When reading a file open for writing, the client asks one of the block replicas for the latest length of the content before starting to read it.
+** Block Placement
+*** Nodes of a rack share a switch, and rack switches share a common core switch. Bandwidth b/w nodes on same rack is greater.
+*** Network bandwidth is estimated by the distance b/w 2 nodes. Distance b/w node and parent is 1. Total distance is calculated by summing up distances to ancestor.
+*** Admin given capability to create a script that returns a node's rack given it's address, usually run by the NN. If no such script is configured, NN assumes all belong to a single rack.
+*** When writing, HDFS places no more than 1 replica on the same node and no more than 2 replicas on the same rack, provided there are enough racks in the cluster.
+** Replication Management
+*** NN ensures a block always has the intended amount of replicas. Detects whether they're over or under replicated.
+*** Takes care of factors such as racks hosting the replica, disk space on data nodes etc, to ensure maximum storage utilization and block availability.
+*** Under-replicated block put on *replication priority queue*. Block with one replica has highest priority. Block with greater than 2/3 its number of replicas has lowest priority.
+*** If all replica blocks end up being placed on same rack, then block is considered under-replicated.
+** Balancer
+*** HDFS does not take disk space utilization when placing data nodes. Otherwise new data might end up getting placed in a smaller subset of nodes. Therefore, imabalance can occur.
+*** Balancer balances disk space usage on HDFS cluster. Node is balanced if disk usage/disk space ratio differs from the same ratio of the cluster by no more than the threshold value (configurable).
+** Block Scanner
+*** Scans to verify blocks and checksums. If client is able to read a block, that is considered as verification.
+*** If a corrupt block is detected, a good replica is first duplicated and then only corrupt block is deleted to ensure data preservation.
+** Decomissioning
+*** A node not having an address in the include list of a cluster is marked for decomissioning. It still serves read requests, but will not be considered for replica placement.
+*** NN starts replicating blocks from this to other nodes, once all blocks are replicated, node is considered decomissioned and can be safely removed.
+
+
+* Footnotes
+
+[3] [[file:~/ownCloud/Reading/Papers/Distributed%20Systems/The%20Google%20File%20System.pdf][The Google File System]]
+
+[2] [[file:~/ownCloud/Reading/Papers/Distributed%20Systems/Data-intensive%20file%20systems%20for%20Internet%20services-%20A%20rose%20by%20any%20other%20name.pdf][Data-intensive file systems for Internet services: A rose by any other name ...]]
+
+[1] [[file:~/ownCloud/Reading/Papers/Distributed%20Systems/PVFS-%20A%20Parallel%20File%20System%20for%20Linux%20Clusters.pdf][PVFS: A Parallel File System for Linux Clusters]]
