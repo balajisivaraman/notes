@@ -1,0 +1,42 @@
+#+TITLE: Notes on MapReduce: Simplified Data Processing on Large Clusters Paper
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* PROGRAMMING MODEL
+** Input and output are a set of key value pairs. Operations specified by user as a Map and a Reduce.
+** Map is (k1, v1) -> list(k2, v2). Reduce is (k2, list(v2)) -> list(v2).
+
+
+* IMPLEMENTATION
+** Jobs are submitted to a scheduling system. Each job consists of a list of tasks, which are assigned to machines in the cluster.
+** Execution Overview
+*** Map invocations are distributed by parititioning data into M splits.
+*** Reduce is processed by partitioning intermediate key space into R pieces, using a partitioning function (hash(key) mod R). Both function and number of splits specified by user.
+*** Input file split into M piece of 16MB to 64MB each. One of the servers is the master. Master assigns a Map operation to an idle worker.
+*** Intermediate output of Map is buffered in memory. If it becomes too large, it is written to disk using the partitioning logic.
+*** When worker finishes Map, it informs master of locations of finished data, which is passed onto workers that are assigned the Reduce operation.
+*** Reduce first sorts by the intermediate keys, then passes each key and list of values to the Reduce operation specified by the user.
+*** After succesful completion, output is available in R output files, one per Reduce task.
+** Master Data Structures
+*** Master keeps track of operations using flags (idle, in-progress, completed).
+** Fault Tolerance
+*** Worker Failure
+**** Completed Map tasks on failed workers need to be re-executed since their outputs are stored locally.
+**** Completed Reduce tasks need not be re-executed since their output is stored in a global file system.
+*** Master is checkpointed to make recovering from failures easy. However, in the current implementation job is aborted if master fails. Client has to retrigger the job.
+** Backup Tasks
+*** When a MapReduce operation is near completion, master schedules it on backup workers. Job is considered complete if either the primary or backup completes it.
+
+
+* REFINEMENTS
+** User specified partitioning function. Default just hashes it based on the key.
+** Map output and reduce input is guaranteed to be ordered.
+** Users can specify a combiner function. For eg: word counts will produce many results of form (the, 1). These can be combined. Difference b/w reduce and combine is where output is written. Combine writes intermediate file used as input to Reduce, which write final output file.
+** Alternative implementation of MapReduce available to run tasks locally, this is useful for debugging user specified code.
+** Users can also specify counters to keep track of certain things, like upper case words. Counter incremented by the map operation. Result passed to master which aggregates and sends to client.
