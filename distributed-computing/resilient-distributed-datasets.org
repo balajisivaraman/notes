@@ -1,0 +1,80 @@
+#+TITLE: Notes on Resilient Distributed Datasets Paper
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* INTRODUCTION
+** Current frameworks (MapReduce) leverage the cluster's computational resources and not the distributed memory.
+** The only way to save data b/w 2 MR jobs is to save to an external FS. This causes replication, disk i/o and network overhead.
+** The main challenge is for the programming interface to provide nice fault tolerance.
+** Existing abstractions rely on fine-grained mutations and thus require approaches like replication for fault tolerance, and they cause additional overhead.
+** RDDs log the linege of data (how to compute it? map, filter, join), instead of the actual data itself.
+** Most existing applications can be modeled in terms of these coarse grained operations.
+
+
+* RESILIENT DISTRIBUTED DATASETS
+** RDD Abstraction
+*** Read only, partitioned collection of records that can only be created through deterministic operations (transformations such as map, filter and join) on stable storage data or other RDDs.
+*** An RDD need not be materialzed at all times, instead it holds enough info to compute itself from stable storage, a powerful property since a program cannot reference an RDD it cannot reconstruct after failure.
+*** Users can specify which datasets they want persisted for subsequent transactions and how they want datasets to be partitioned. This is useful for partitioning two datasets that will be joined in the same manner, and also allows us to perform locality optimizations.
+** Spark Programming Interface
+*** RDDs are defined from stable storage using transformations like map and filter.
+*** Finally actions can be performed on them to yield results -> count, collect, save (outputs the dataset to a storage system). Lazy computation allows Spark to pipeline these operations.
+*** Persist is called to indicate which data sets will be reused, normally in-memory, but falls back to disk when lacking space. Persistence strategies can also be specified.
+    #+begin_src scala :tangle yes
+lines = spark.textFile("hdfs://...")
+errors = lines.filter(_.startsWith("ERROR"))
+errors.persist()
+//Nothing has happened so far
+errors.count()
+//Dataset loaded into memory, lines not loaded since errors is a subset of lines
+//Further actions will be a lot faster, because dataset is now in memory
+    #+end_src
+*** The Spark scheduler will pipeline the transformations and send a set of tasks to compute them to the nodes holding the cached partitions of errors.
+*** In addition, if a partition of errors is lost, Spark rebuilds it by applying a filter on only the corresponding partition of lines.
+** Advantages
+*** No mutation means fault tolerance is very easy. No need to checkpoint intermediate results. Can be easily computed using lineage.
+*** Stragglers can be mitigated by running backup tasks, similar to MapReduce.
+*** Scheduling tasks based on data locality (again similar to MapReduce) and graceful slowdown. Datasets that cannot be fit in memory will be read from disks.
+
+
+* SPARK PROGRAMMING INTERFACE
+** Developers write a driver program that connects to a cluster of workers, also define one or more RDDs to be read from stable storage and transformations to be done on them.
+** Operations are plain Scala closures that can be serialized and passed to nodes.
+** Operations such as groupByKey, reduceByKey and sort automatically result in a hash or range partitioned RDD. This partitioner can be obtained and used to partition other RDDs.
+** In the PageRank example, we can specify a Partitioner that partitions using a hash on the URL. We can then partition ranks by the same partitioner to ensure that List[Urls] that refer a link and the rank are in the same node.
+
+
+* REPRESENTING RDDs
+** In a nutshell, each RDD exposes 5 key pieces of info.
+*** a set of partitions, which are atomic pieces of the dataset
+*** a set of dependencies on parent RDDs
+*** a function for computing itself from parents
+*** metadata about its partitioning scheme and data placement
+** Dependencies
+*** Either narrow (map produces this) or wide (join produces this, unless parent RDDs partitioned). Former is where each partition of parent is used by atmost one child, while the latter has multiple child partitions dependent on parents.
+*** Narrow dependencies mean they can be efficiently executed on cluster nodes by applying them to only the data on that node.
+*** Wider dependencies require a larger dataset that requires shuffling data across nodes using MapReduce.
+*** Former means recovery from failure is very easy by executing the same operations on many nodes, while the latter makes recovery more difficult.
+** RDD Implementations
+*** HDFS files: The input RDDs in our samples have been files in HDFS. For these RDDs, partitions returns one partition for each block of the file (with the block’s offset stored in each Partition object), preferredLocations gives the nodes the block is on, and iterator reads the block.
+*** MappedRDD has same partitions, preferredLocations as parent, but applies functin to each record.
+
+
+* IMPLEMENTATION
+** Job Scheduling
+*** Whenever a user runs an action, the scheduler examines the lineage to derive a DAG of stages to execute. Boundaries of stages are usually wide dependencies and the scheduler pipelines narrow dependencies within each stage.
+*** If a task processes a partition that is already available in memory on a node, it is sent to that. Or if the partition has preferred locations, it is sent to one of those.
+*** Wide dependencies are materialized on nodes holding parent data sets, like MapReduce computes result of Map operations.
+*** Task failures are handled by scheduling on other nodes if parent is available. If entire stages are unavailable, tasks are resubmitted to compute those partitions. Scheduler failures are not handled yet.
+** Memory Management
+*** RDDs can either be deserialized POJOs in memory or serialized bytes or on-disk. First is fastest, second requires deserialization, third is slower but useful for large datasets.
+*** Spark uses an LRU eviction policy. When a new RDD partition is created, the oldest is deleted, unless it belongs to the same RDD, which is useful since Spark operations are usually run on all partitions of the RDD.
+** Checkpointing
+*** Users can specify REPLICATE to persist calls to decide which data they want to persist. Spark also exploring intelligent persisting of data.
+*** Useful for wide dependency operations where computing using the lineage can be very expensive. Not really useful for narrow dependency pipelined operations such as map or filter.
