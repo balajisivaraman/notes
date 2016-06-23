@@ -1,9 +1,25 @@
+#+TITLE: Notes from Functional Programming in Scala Book
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
 * Ch1 - What is functional programming?
 ** Referential transparency forces the invariant that everything a function does is represented by the value it returns, according the result type of the function. (This is clearly note true for methods that return void or Unit.)
 ** This enables a natural way to reason about programs called the substitution model. We can reason about programs the same way we would reason about algebraic equations.
 ** If we're looking at a humongous piece of code, we only need to worry about this function/block/piece of code we're reading right now, if and only if the surrounding functions/blocks/pieces are referentially transparent. We needn't worry about where state is getting mutated.
 ** Understanding code only requires `local reasoning`.
 ** Pure functions are fully composable because of this property of referential transparency and the substitution model. A function A => B always takes an A and returns a B. This means any place where we have an A and need a B, we can go ahead and use it without having to keep track of an entire program's worth of logic.
+* Ch3 - Purely Functional Data Structures
+** Purely functional data structures can only be operated on by pure functions, that means they cannot be update in-place.
+** Just as 3 and 7 are immutable values, so is `Nil` and any List of concrete values.
+** Important concept in immutable data structures is *Data Sharing*.  By reusing the rest of the list, our functions are sometimes more efficient than the traditional solutions.
+** The append function is a nice example of one that is more efficient in this design, where we go through the first list until it is exhausted, the rest just points to the second list.
+** foldRight can be thought of as constructor replacement. It must traverse all the way to the end of the list before it can begin collapsing it.
 * Ch7 - Purely Functional Parallelism
 ** Choosing Data Types and Functions (Building Blocks of our API)
 *** To attack any problem domain in a functional manner, first take a simple problem in that domain, and create data types for it. It need not be perfect or what you would otherwise use in the final solution. But creating data types often reveals something underlying about the domain itself that you wouldn't have thought of before.
