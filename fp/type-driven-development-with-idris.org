@@ -35,3 +35,5 @@
    - Still doesn't seem very safe since Bounded includes 0.
 ** Totality - Idris doesn't solve the halting problem. It simply identifies a large class of functions that are definitely total.
 ** A first-class language construct is one which is treated as a value, with no syntactic restrictions on where it can be used. In other words, a first-class construct can be passed to functions, returned from functions, stored in variables, and so on.
+* Getting Started With Idris
+** All tuples in Idris are represented as nested pairs. So (1, 2, 3, 4) is the same as (1, (2, (3, 4)))
