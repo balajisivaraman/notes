@@ -1,0 +1,37 @@
+#+TITLE: Notes on Type Driven Development With Idris
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+
+* Overview
+** Types serve several important functions
+   1. for a machine, types describe how bit patterns in memory are to be interpreted
+   2. for a compiler or interpreter , types help ensure that bit patterns are interpreted
+   consistently when a program runs
+   3. for a programmer, types help name and organise concepts, aiding documentation and
+   supporting interactive editing environments
+** First define the data types, then for each function:
+   1. Write the input and output types
+   2. Define the function, using the structure of the input types to guide the implementation
+   3. Refine and edit the type and function definition as necessary
+** We define data types that make the problem domain explicit in the code itself.
+   1. For instance, defining a matrix data type that includes the dimensions of the matrix as well.
+   2. Why cannot we do this in a non-dependently typed language?
+   3. Developing and testing concurrent programs is notoriously difficult.
+   If we can describe the relationships between processes as types, we can guarantee that a concurrent program that typechecks will work correctly.
+** Type Drive Development is an iterative process of "Type. Define. Refine."
+** A dependent type is a type, like Matrix, that is calculated from (i.e. depends on) some other values.
+   1. List type in some langs: We can make this more precise by parameterising over the element type: a generic "List of
+   Strings" is more precise than simply a "List" and differs from a "List of Integers". We
+   can be more precise still with a dependent type: a "List of 4 Strings" differs from a "List
+   of 3 Strings".
+** Assume that Bounded n represents a number between zero and n - 1. Input types: Bounded n, Vect n elem.
+   - Still doesn't seem very safe since Bounded includes 0.
+** Totality - Idris doesn't solve the halting problem. It simply identifies a large class of functions that are definitely total.
+** A first-class language construct is one which is treated as a value, with no syntactic restrictions on where it can be used. In other words, a first-class construct can be passed to functions, returned from functions, stored in variables, and so on.
