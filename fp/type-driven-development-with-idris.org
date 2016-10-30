@@ -9,7 +9,7 @@
 #+LATEX_HEADER: \setsansfont{Verdana}
 #+LATEX: \newpage
 
-* Overview
+* Chapter 1 - Overview
 ** Types serve several important functions
    1. for a machine, types describe how bit patterns in memory are to be interpreted
    2. for a compiler or interpreter , types help ensure that bit patterns are interpreted
@@ -35,5 +35,12 @@
    - Still doesn't seem very safe since Bounded includes 0.
 ** Totality - Idris doesn't solve the halting problem. It simply identifies a large class of functions that are definitely total.
 ** A first-class language construct is one which is treated as a value, with no syntactic restrictions on where it can be used. In other words, a first-class construct can be passed to functions, returned from functions, stored in variables, and so on.
-* Getting Started With Idris
+* Chapter 2 - Getting Started With Idris
 ** All tuples in Idris are represented as nested pairs. So (1, 2, 3, 4) is the same as (1, (2, (3, 4)))
+* Chapter 3 - Interactive Development with Types
+**  For the moment, it’s sufficient to know that Idris will consider a function total if
+     - It has clauses that cover all possible well-typed inputs
+     - All recursive calls converge on a base case
+** Idris processes files top to bottom and expects definitions to appear before they are used. If we want two functions to use each other, they must be defined in a mutual block.
+** Because types are first class, type-level variables can also be brought into scope and used in definitions. These type-level variables are referred to as implicit arguments to the functions reverse and append.
+** Type-level variables are implicit arguments to functions, which can be brought into scope and used like any other arguments by enclosing them in braces {}.
