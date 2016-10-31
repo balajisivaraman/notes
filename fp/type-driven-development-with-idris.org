@@ -44,3 +44,18 @@
 ** Idris processes files top to bottom and expects definitions to appear before they are used. If we want two functions to use each other, they must be defined in a mutual block.
 ** Because types are first class, type-level variables can also be brought into scope and used in definitions. These type-level variables are referred to as implicit arguments to the functions reverse and append.
 ** Type-level variables are implicit arguments to functions, which can be brought into scope and used like any other arguments by enclosing them in braces {}.
+* Chapter 4 - User Defined Data Types
+** We'll classify types into five basic groups, although they are all defined with the same syntax:
+   1. Enumerations: types defined by giving the possible values directly
+   2. Union Types: enumerated types which carry additional data with each value
+   3. Recursive Types: union types which are defined in terms of themselves
+   4. Generic Types: types which are parameterised over some other types
+   5. Dependent Types: types which are computed from some other value
+** %name directives can be given to Idris to choose more descriptive names for a type.
+** Dependent data types are sometimes called families of types since we define multiple related types at the same time.
+   - In our vehicle example, we defined pedal and petrol vehicles at the same time.
+   - The power source is an index of the Vehicle family, since it tells us exactly what vehicle type we mean.
+** Vect defines a family of types, and we say that a is by its Vect indexed length and parameterised by an element type.
+** The distinction between parameters and indices is:
+   - A parameter is unchanged across the entire structure. In this case, element every of the vector has the same type
+   - An index may change across a structure. In this case, every sub-vector has a different length.
