@@ -59,3 +59,11 @@
 ** The distinction between parameters and indices is:
    - A parameter is unchanged across the entire structure. In this case, element every of the vector has the same type
    - An index may change across a structure. In this case, every sub-vector has a different length.
+* Chapter 5 - Interactive Programs: Input and Output Processing
+** Dependent types allows us to state assumptions about the form of inputs to a function in its type, and guarantees about the form of its output.
+** Idris checks that whenever the function is called, the arguments satisfy the assumption, and that the definition of the function satisfies the guarantee.
+** When a program reads data from some external source, it can't make any assumptions about the form of that data. Rather, the program has to that the data is of the check necessary form. *The type of a function tells us exactly what we need to check in order to evaluate it safely.*
+** The types of the pure parts of programs tell us what we need to check in the interactive parts, and how the type system guides us towards the parts where error checking is necessary.
+** A dependent pair is a more expressive form of tuples, where the of the type second element in a pair can be computed from the of the first element.
+   anyVect : (n : Nat ** Vect n String)
+   anyVect = (3 ** ["Rod", "Jane", "Freddy"])
