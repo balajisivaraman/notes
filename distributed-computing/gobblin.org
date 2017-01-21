@@ -1,0 +1,49 @@
+#+TITLE: Notes on Gobblin: Unifying Data Ingestion for Hadoop
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* INTRODUCTION
+** Primarlily built to solve the problem of heterogenous data sources at LinkedIn. No use re-implementing hashmap for every type of key and value argument.
+** Five primary goals - Source Integration, Processing paradigm, extensibility, self-service and data quality assurance.
+* ARCHITECTURE AND OVERVIEW
+** System Architecture and Components
+*** Job ingests data from a source to a sink, consisting of multiple workunits (tasks).
+*** Job Constructs
+**** Source - Partitions data ingestion work into work units and assigns Extractors to them. Hash or bin-packing used to partition source work.
+**** Extractor - Does the work specified in a work unit. Watermarks (low and high) used to know where to start and end the reading work at source.
+**** Converter - Can convert one input record to zero or more records. Are pluggable and chainable and easy to implement our own.
+**** Quality Checker - Record level and task level policies. Also mandatory or optional policies. Former results in data being discarded, while latter results in a warning.
+**** Writer - Records that pass quality checker written to staging directory. Writer then moves to an output directory pending publishing by the Publisher.
+***** For example, at LinkedIn we publish many datasets in “hourly” and “daily” folders, which contain records with timestamps in that hour or day.
+**** Publisher - commit-on-full-success and commit-on-partial-success provided depending on needs. Latter commits data for all succeeded tasks, while for each failed task, partial data will be committed if the task moved them from the staging directory to the output directory.
+**** Fork Operators - Allow an extracted record to be processed by different branches. Each fork can be processed separately and published to different sinks.
+** State Store
+*** Manages job and task state across job runs. Stores things such as the high and low watermarks so that tasks can be picked up from where they left off.
+*** Gobblin by default uses an implementation of the state store that serializes job and task states into Hadoop Sequence- Files, one per job run.
+*** Each job has a separate directory where the state store SequenceFiles of its runs are stored. Upon start, each run of a job reads the SequenceFile of the previous run in the corresponding directory to get its run- time metadata.
+*** We can also define our own State Store implementations by extending an interface.
+** Job Execution
+*** Responsible for running the job depending on the deployment mode. Common tasks such as error handling, management, scheduling provided by run time.
+*** Error Handling
+**** Job failures are tracked and mails sent out after configurable number of failures.
+**** Task failures can be retried for a configurable number of times.
+**** Workunits for task failures can also be retried. Workunit that failed will automatically be included in the next run of the job. Useful for handling intermittent failures like network blips or source unavailability.
+*** Can be plugged with Oozie, Azkaban, even Quartz in stand alone deployment. Decoupled scheduling allows different jobs to use differen schedulers.
+** Metrics and Monitoring - Supports counters, gauges, histograms etc and can post data to Kafka, Graphite, JMX, logs etc.
+** Compaction - Hive and Map Reduce compactors are provided, along with deduplication.
+** Deployment - Can be tested in standalone mode on local machine and deployed without code change. Also look into Gobblin on YARN.
+* CASE STUDIES
+** JDBC to HDFS ingestion
+*** Uses timestamp values to pull in additional data. Current support is provided for MySQL and SQL Server.
+*** Data pulled as JDBC queries into JSON format. Converter converts them into Avro records.
+*** Task level quality checker to ensure no. of rows read and written are the same.
+*** Data published into a complete file for a single table, no partitioning, unlike Kafka writers.
+*** Tuple updates are handled by having a snapshot job run at infrequent intervals, and an append job at regular intervals.
+*** The append job creates multiple versions in HDFS for the same source row and we need to handle using the latest version.
+*** Compactor can also be tuned to deduplicate the multiple versions to the latest one.
