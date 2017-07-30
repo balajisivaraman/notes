@@ -1,0 +1,28 @@
+#+TITLE: Notes from Rust Introduction Tutorial
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* Getting Started
+** Function names ending with ! indicate a Macro, this is how metaprogramming is done in Rust.
+** "Hello, world!" is as statically allocated string. We'll return to this later.
+* Guessing Game
+** The Prelude gets imported by default to every program. There's also an IO Prelude, which gives useful functions for working with IO. This needs to be imported manually.
+** No return type indicates (), an empty tuple.
+** Rust variable bindings are immutable by default. When we say, let foo = bar, that creates an immutable binding. This is why we do `let mut`.
+** The word on the left hand side of a let is not a variabe, it's a pattern.
+** A String is a growable, UTF-8 encoded bit of text.
+** The ::new() syntax uses :: because this is an ‘associated function’ of a particular type. That is to say, it’s associated with String itself, rather than a particular instance of a String. Some languages call this a ‘static method’.
+** We call the read_line() method on our handle. Methods are like associated functions, but are only available on a particular instance of a type, rather than the type itself. We’re also passing one argument to read_line(): &mut guess.
+** Rust references are immutable by default. We'll return to this later. This is why we wrote &mut guess, instead of &guess.
+** read_line() also returns a value: in this case, an io::Result. Rust has a number of types named Result in its standard library: a generic Result, and then specific versions for sub-libraries, like io::Result. The purpose of these Result types is to encode error handling information.
+** The {}s are a placeholder, and so we pass it guess as an argument. If we had multiple {}s, we would pass multiple arguments.
+** Cargo understands Semantic Versioning, which is a standard for writing version numbers. A bare number like above is actually shorthand for ^0.3.0, meaning "anything compatible with 0.3.0". If we wanted to use only 0.3.0 exactly, we could say rand="=0.3.0" (note the two equal signs). And if we wanted to use the latest version we could use *.
+** Rust has Enums. Ordering is an Enum.
+** Wait a minute, I thought we already had a guess? We do, but Rust allows us to ‘shadow’ the previous guess with a new one. This is often used in this exact situation, where guess starts as a String, but we want to convert it to an u32. Shadowing lets us re-use the guess name, rather than forcing us to come up with two unique names like guess_str and guess, or something else.
+** Sidenote: Shadowing seems really useful for reusing variables with casting.
