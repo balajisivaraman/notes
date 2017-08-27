@@ -21,6 +21,9 @@
 ** The append function is a nice example of one that is more efficient in this design, where we go through the first list until it is exhausted, the rest just points to the second list.
 ** foldRight can be thought of as constructor replacement. It must traverse all the way to the end of the list before it can begin collapsing it.
 * Ch7 - Purely Functional Parallelism
+** Introduction
+*** We’ll emphasize algebraic reasoning and introduce the idea that an API can be described by an algebra that obeys specific laws.
+*** In this particular case, our fundamental assumption will be that our library admits absolutely no side effects.
 ** Choosing Data Types and Functions (Building Blocks of our API)
 *** To attack any problem domain in a functional manner, first take a simple problem in that domain, and create data types for it. It need not be perfect or what you would otherwise use in the final solution. But creating data types often reveals something underlying about the domain itself that you wouldn't have thought of before.
 *** To parallelize something, you need multiple things to first happen. Then they can be parallelized.
@@ -33,11 +36,11 @@
 *** Therefore, we want to delay calling `get()` as much as possible. (LAZY EVALUATION) It shouldn't be invoked until we absolutely know we need the result right away. We want to be able to combine asynchronous computations without waiting for them to finish.
 *** Par.map2 Type Signature. We need two type parameters since we're taking two parallel computations that may be of different base types.
     - Should map2 arguments be lazily evaluated?
-    - If map2 isn't strict, then arguments are evaluated left to right (scala default) and left tree is fully constructed before the right is even begun? NO-GO.
+    - If map2 is strict, then arguments are evaluated left to right (scala default) and left tree is fully constructed before the right is even begun? NO-GO.
     - If map2 is strict, but not evaluated immediately, we still have to construct a huge tree (that may not fit in memory) describing the entire computation. This can be huge for even trivial problem spaces.
     - map2 should be lazy and begin execution of both sides in parallel, not giving any sort of priority to either side.
-    - Par.map2[A, B](a: Par[A], b: Par[B])(f: (A, B) => Par[C]): Par[C] -> This is wrong.
-    - Par.map2[A, B](a: => Par[A], b: => Par[B])(f: (A, B) => Par[C]): Par[C] -> This maybe right.
+    - Par.map2[A, B, C](a: Par[A], b: Par[B])(f: (A, B) => C): Par[C] -> This is wrong.
+    - Par.map2[A, B, C](a: => Par[A], b: => Par[B])(f: (A, B) => C): Par[C] -> This maybe right.
 ** Explicit Forking
 *** If we further think about the problem statement, we don't always want to delay execution of map2. In the trivial case where we're mapping over two `units`, there is no sense in forking off a separate logical thread to do the computation.
 *** *That is, our current API is very inexplicit about when computations get forked off the main  thread—the programmer doesn’t get  to  specify where  this  forking  should occur.*
@@ -55,3 +58,13 @@
 *** We could also unwrap the Future ourselves, but we have to leave that control to the users of our API.
 *** *Was it cheating to pass a bogus value, unit(()), as an argument to map2, only to ignore its value? Not at all! The fact that we can implement map in terms of map2, but not the other way around, just shows that map2 is strictly more powerful than map.*
 *** *This sort of thing happens a lot when we’re designing libraries—often, a function that seems to be primitive will turn out to be expressible using some more powerful primitive.*
+** The algebra of an API
+*** We’re treating the API as an algebra, or an abstract set of operations along with a set of laws or properties we assume to be true, and simply doing formal symbol manipulation following the rules of the game specified by this algebra.
+*** Laws often start out as concrete examples of identities we expect to hold. For eg: map(unit(1))(_ + 1) == unit(2)
+*** In what sense are they equivalent? This is an interesting question. *For now, let’s say two Par objects are equivalent if for any valid ExecutorService argument, their Future results have the same value.*
+*** Laws and functions share much in common. Just as we can generalize functions, we can generalize laws. For instance, the preceding could be generalized this way: *map(unit(x))(f) == unit(f(x))*
+*** More concretely, this law disallows downcasting or isInstanceOf checks (often grouped under the term typecasing) in the implementations of map and unit.
+*** Something interesting happens if we substitute the identity function for f: *map(y)(id) == y*
+*** The above law talks only about *map*, without any mention of *unit*. The only thing *map* can do is apply the function to the incoming value. See below: it cannot change the structure of the operation.
+*** We say that map is required to be structure-preserving in that it doesn’t alter the structure of the parallel computation, only the value “inside” the computation.
+*** Thus, given map(y)(id) == y, it must be true that map(unit(x))(f) == unit(f(x)). Since we get this second law or theorem for free, simply because of the parametricity of map, it’s sometimes called a free theorem. (Philip Wadler - Theorems For Free)
