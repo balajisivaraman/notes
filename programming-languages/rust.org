@@ -26,3 +26,50 @@
 ** Rust has Enums. Ordering is an Enum.
 ** Wait a minute, I thought we already had a guess? We do, but Rust allows us to ‘shadow’ the previous guess with a new one. This is often used in this exact situation, where guess starts as a String, but we want to convert it to an u32. Shadowing lets us re-use the guess name, rather than forcing us to come up with two unique names like guess_str and guess, or something else.
 ** Sidenote: Shadowing seems really useful for reusing variables with casting.
+* Common Programming Concepts
+** Variables and Mutability
+*** If one part of the code operates under the assumption that a value will not change, and another part expects it to, that can cause problems.
+*** 'mut' cannot be used with constants. They're immutable by defaut. They're declared using the word 'const'. They must always be annotated. They're not inferred.
+*** Variables can be shadowed by using the 'let' keyword with the same variable name. This is different from marking a variable as mutable.
+*** We can perform transformations on a variable, yet have it be immutable at the end of those transformations.
+*** The other difference is that when shadowing you can change the type of the variable as we saw in the guessing game chapter.
+*** We cannot do the above with 'mut' since that doesn't allow us to change a variable's type.
+** Data Types
+*** When more than one type is possible, such as when we used 'parse', we must add a type annotation. Rust doesn't automatically go with a default type, which is good news I guess.
+*** Scalar Types
+**** A scalar type represents a single value: integers, floating-point numbers, booleans and characters. (Analogous to primitive types in Java.)
+**** i32 is always a good default to use when unsure of what type to use.
+**** Rust has f32 and f64 floating point types. Using the latter in 32-bit systems is possible but slower, so we should benchmark our code to see whether that is the issue.
+**** Mathematical operators are operators in Rust like usual and not functions like Scala.
+**** Rust char type is a unicode scalar value. So it can represent characters, numbers and even emoji.
+*** Compound Types
+**** Rust has tuples and arrays.
+**** Tuples can be destructured using pattern matching much like in Scala.
+**** Tuple elements can also be accessed using 'tup.0', 'tup.1' etc.
+**** Arrays in Rust have a fixed length, unlike other languages. Once declared, they cannot grow or shrink in size.
+**** Arrays are allocated on the stack rather than the heap. If we're unsure, we can use the Vector provided by the stdlib as a safe bet.
+**** Accessing an array index that is out of bounds is still a runtime exception. However, rust still checks whether the index is within the bounds of the array, thereby not allowing access to invalid memory.
+** How Functions Work
+*** Rust doesn't care where you define fns, so long as they're defined somewhere.
+*** Statements perform some action and don't return a value. Expressions always evaluate to a value.
+*** You can do, x = y = 6 in C or Ruby, but you cannot do let x = let y = 6 in Rust, because the let is a statement and not an expression. Statements cannot be bound to variables since they don't return a value.
+*** Expressions do not include ending semicolons, if we do they become a statement, like the below example.
+#+BEGIN_SRC rust
+    let y = {
+        let x = 3;
+        x + 1
+    };
+#+END_SRC
+*** Functions can return values. They are unnamed but we do need to declare their type.
+#+BEGIN_SRC rust
+    fn five() -> i32 {
+        5
+    }
+#+END_SRC
+*** Statements don't evaluate to a value, so putting a semi-colon when you expect the function to return a type is a compile time error. The evaluation of statements is represented by the empty tuple (), analogous to Unit in Scala.
+** Control Flow
+*** If expressions
+**** Else blocks are optional, unlike Scala. If no else block is provided, and the condition evaluates to false, then the if block is skipped entirely and we move on to the next line.
+**** Else blocks are not optional when you are assigning the result of an if block to a variable. Then it is treated as an expression and both sides are needed, resulting in a compile time error otherwise. Also the types in both the arms need to be the same, just like in Scala.
+*** Loops
+**** Like we saw in the guessing game chapter, a 'loop' just gives us an infinite loop.
