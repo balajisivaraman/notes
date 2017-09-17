@@ -150,3 +150,27 @@ let world = &s[6..11];
 let a = [1, 2, 3, 4, 5];
 let slice: &[i32] = &a[1..3];
 #+END_SRC
+* Using Structs to Structure Related Data
+** Defining and Instantiating
+*** Mutable struct instances values can be changed by using the dot notation.
+*** If a variable name and struct field name are the same, then we can use shorthand notation and leave out the key-value pair notation in Struct instantiation.
+*** We can create Tuple structs that look similar to Tuples, only that they have a name associated with them, like below.
+ #+BEGIN_SRC rust
+ struct Color(i32, i32, i32);
+ #+END_SRC
+*** So far we created Structs by specifying &String instead of &str. This is because we want the Struct to own its entire data. However, we can circumvent this by using lifetimes discussed later.
+** Derived Traits
+*** println! by default formats things based on the Display trait. These are implemented for all primitive types. But we should implement them for our Structs to let println! know how it should be printed.
+*** If we use {:?}, the we're telling println! to use the output format provided by the Debug trait.
+*** I'm thinking this is analogous to type classes, but we'll see more later.
+** Methods on Traits
+*** We define these like functions within an impl block for the trait.
+*** Parameters can take ownership also if necessary, just like functions.
+*** Taking ownership in a method is rare. We do this when we want to transform self to something else and ensure our caller doesn't use it in the future.
+*** In C++, we use object->something() to mean the same as (*object).something(). The former syntax means dereference this pointer before calling something.
+*** Rust has automatic referencing and dereferencing. Rust automatically adds in &, &mut, or * like follows:
+ #+BEGIN_SRC rust
+ p1.distance(&p2);
+ (&p1).distance(&p2);
+ #+END_SRC
+*** They both mean the same thing in the context of method calling. This is because for methods, the first parameter is self, and we specify whether it should be a mutable borrow, immutable borrow or ownership transfer.
