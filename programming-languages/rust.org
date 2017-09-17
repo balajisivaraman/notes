@@ -194,3 +194,17 @@ let slice: &[i32] = &a[1..3];
 ** A String is a wrapper over a Vec<u8>.
 ** Since there would be confusion over whether to return the unicode value of an index or actual string and since different unicode characters are represented differently, Rust chooses not to allow String indexing.
 ** For owned values like String, if we insert an existing variable into a Hashmap, that becomes the owner of it, and we can't refer to the variable anymore in our program.
+* Error Handling
+** Rust has recoverable and unrecoverable errors.
+** Unrecoverable Errors
+*** Result<T, E> is there for the former and panic! macro is there for the latter.
+*** When the panic! macro executes, the program will print a failure message, unwind and clean up the stack, and quit.
+*** If we don't want to unwind, the alternative is to immediately abort, which means the OS has to clean up any memory we're using.
+*** We can do this if we want our binary to be really small. We can add it to the profile section of our Cargo.toml file for release profile as well.
+** Recoverable errors with Result
+*** When matching on Err, we use 'ref' instead of '&' to take a reference. 'ref' matches and gives us a reference to it is the short answer.
+*** We can use 'unwrap' to get the value out of Result. But this panics in case of Err value. We can also use 'expect' to give it an error message. No idea why we would ever do this as it's unsafe.
+*** The ? operator is built to work with the Result type and is the same as matching on Result and handling both cases. If it's Ok, the value gets returned, if it's Err, it gets propagated.
+*** ? can only be used within functions that themselves have a return type of Result. For example, we cannot use this within the main function.
+** To Panic or Not to Panic
+*** As we know, a good default is to return Result always and leave the decision making on how to handle the error at the hands of our caller.
