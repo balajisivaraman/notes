@@ -180,3 +180,9 @@ let slice: &[i32] = &a[1..3];
 ** They can contain methods much like structs.
 ** Rust doesn't have NULL. This means unless we're working with Options, we can be safe to assume that a value is always present.
 ** Awesome! Rust matches are exhaustive. Non-exhaustive matches are compile time erros.
+* Modules
+** Defines using the mod keyword. Code can immediately follow it or be put in another file.
+** By default everything is private. You use pub to make an item public and accessible to others.
+** Privacy Rules
+*** If an item is public, it can be accessed through any of its parent modules.
+*** If an item is private, it can only be accessed by the current module and its child modules.
