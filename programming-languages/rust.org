@@ -186,3 +186,11 @@ let slice: &[i32] = &a[1..3];
 ** Privacy Rules
 *** If an item is public, it can be accessed through any of its parent modules.
 *** If an item is private, it can only be accessed by the current module and its child modules.
+* Common Collections
+** Vectors allows us to store more than one value in a single data structure that puts all values next to each other in memory.
+** String is implemented as a collection of bytes, plus some functionality when those bytes are interpreted as text.
+** String can be coerced into a &str. When we pass this, Rust uses something called /deref coercion/.
+** Rust Strings don't support indexing. That is, s[0] is invalid.
+** A String is a wrapper over a Vec<u8>.
+** Since there would be confusion over whether to return the unicode value of an index or actual string and since different unicode characters are represented differently, Rust chooses not to allow String indexing.
+** For owned values like String, if we insert an existing variable into a Hashmap, that becomes the owner of it, and we can't refer to the variable anymore in our program.
