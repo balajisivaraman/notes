@@ -174,3 +174,9 @@ let slice: &[i32] = &a[1..3];
  (&p1).distance(&p2);
  #+END_SRC
 *** They both mean the same thing in the context of method calling. This is because for methods, the first parameter is self, and we specify whether it should be a mutable borrow, immutable borrow or ownership transfer.
+* Enum and Pattern Matching
+** Woot! Enums are similar to ADTs in Haskell. I'm already giddy.
+** Enums can hold any type of data, scalar types, compound types, structs, other enums.
+** They can contain methods much like structs.
+** Rust doesn't have NULL. This means unless we're working with Options, we can be safe to assume that a value is always present.
+** Awesome! Rust matches are exhaustive. Non-exhaustive matches are compile time erros.
