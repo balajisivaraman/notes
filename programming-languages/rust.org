@@ -208,3 +208,65 @@ let slice: &[i32] = &a[1..3];
 *** ? can only be used within functions that themselves have a return type of Result. For example, we cannot use this within the main function.
 ** To Panic or Not to Panic
 *** As we know, a good default is to return Result always and leave the decision making on how to handle the error at the hands of our caller.
+* Generic Types, Traits and Lifetimes
+** Generics
+*** There's no runtime cost of using generics. Rust performs something called monomorphization of code at compile time. This is the process of turning generic code into specific code with concrete types that are actually used filled in.
+*** When we use generic parameters, we can use /trait bounds/ to specify, at compile time, that the generic type may be any type that implements a trait and therefor has the behaviour we want to use in that situation.
+*** When we implement traits, it follows a very similar syntax to creating instances of typeclasses in Haskell.
+*** We aren't able to implement traits on external traits and external types. We can define if the trait is ours or the type is ours.
+*** This restriction is part of the /orphan rule/ in type theory. It's called this because the parent type is not present.
+*** Without this, two crates could implement the same trait for the same type, and the two implementations would conflict. Because of this rule, other people's code cannot break ours and vice versa.
+*** If our trait contains a default implementation for a method, then we can just implement the trait for our type and have no definition.
+*** Default implementations in the trait are allowed to call other methods, even if they don't have default implementations.
+*** Trait bounds can be specified on generic types. Multiple ones can be specified with + operator.
+*** We can also specify trait bounds at the end of definitions, using the where clause.
+*** With normal types, we knew the amount of space needed to be allocated at compile time, so Rust would know how to move the value out of the list. That's not possible with generic values.
+*** To enable list accessors on generic types, we also need to enable the Copy trait bound.
+*** The above is needed only if we're returning the value by moving it out, if we're returning only a reference to it, we wouldn't need it.
+** Lifetimes
+*** Every reference in Rust has a lifetime. Most of the time lifetimes are inferred and implicit, just like types.
+*** And similar to how we need to annotate types when they can't be inferred, we may need to annotate lifetimes as well.
+*** The main aim of lifetimes is to prevent dangling references, which will cause the program to reference data that we're not intending to reference.
+ #+BEGIN_SRC rust
+ {
+   let r;
+   {
+     let x = 5;
+     r = &x;
+   } // x goes out of scope here, so any reference to it will also be invalidated
+  println!("r is {}", r); //since x has gone out of scope, r is invalid
+ #+END_SRC
+*** In the above case, we'll get an error saying 'x' does not live long enough.
+*** The part of the compiler called the borrow checker does this checking. Basically, it sees that something with a larger lifetime is referring to something with a smaller lifetime and rejects the program.
+*** There are some cases where the borrow checker cannot determine the lifetime in a straightforward fashion. Look at the string example in code.
+*** In the same way a function can accept any type when the signature specifies a generic type parameter, functions can accept references with any lifetime when the signature specifies a generic lifetime parameter. What lifetime annotations do is relate the lifetimes of multiple references to each other.
+*** Lifetime annotations must begin with a ' followed by a short name, usually just a. For eg: 'a. They must be specified after the & of a reference.
+ #+BEGIN_SRC rust
+ &i32        // a reference
+ &'a i32     // a reference with an explicit lifetime
+ &'a mut i32 // a mutable reference with an explicit lifetime
+ #+END_SRC
+*** If we have a function accepting two parameters with the same lifetime parameter 'a, that means both parameters must live as long as 'a.
+*** Lifetime parameters are usually only put in function signatures. This is because the body of the function can be figured out by the compiler. But when it is called multiple times from different places with different values and lifetimes, we need to help the compiler figure out the lifetimes.
+*** When concrete references are passed to longest, the concrete lifetime that gets substituted for 'a is the part of the scope of x that overlaps with the scope of y. Since scopes always nest, another way to say this is that the generic lifetime 'a will get the concrete lifetime equal to the smaller of the lifetimes of x and y. Because we've annotated the returned reference with the same lifetime parameter 'a, the returned reference will therefore be guaranteed to be valid as long as the shorter of the lifetimes of x and y.
+*** Lifetime Elision
+**** In earlier versions of Rust, every function that took and returned references needed to be annotated. Like the below example:
+ #+BEGIN_SRC rust
+ fn first_word(s: &str) -> &str {
+     let bytes = s.as_bytes();
+
+     for (i, &item) in bytes.iter().enumerate() {
+         if item == b' ' {
+             return &s[..i];
+         }
+     }
+
+     &s
+ }
+ #+END_SRC
+**** However, the Rust core team found that some patterns emerged in the usage of lifetimes and programmed them into the compiler.
+**** These are called /lifetime elision rules/. We don't have to follow these, but if code we write fits into them, Rust will fill in the lifetimes.
+**** Lifetimes on method parameters are called /input lifetimes/ and those on return values are called /output lifetimes/.
+**** The third lifetime elision rule states that, if of multiple parameters one of them is &self or &mut self, lifetime of self is assigned to all output parameters.
+*** There is a special lifetime called 'static, whose lifetime is the entire duration of the program.
+*** All string literals have the static lifetime. This is why the program where we declared a literal within an inner block worked.
