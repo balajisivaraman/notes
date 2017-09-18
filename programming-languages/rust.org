@@ -270,3 +270,12 @@ let slice: &[i32] = &a[1..3];
 **** The third lifetime elision rule states that, if of multiple parameters one of them is &self or &mut self, lifetime of self is assigned to all output parameters.
 *** There is a special lifetime called 'static, whose lifetime is the entire duration of the program.
 *** All string literals have the static lifetime. This is why the program where we declared a literal within an inner block worked.
+* Testing
+** Attributes are metadata about pieces of Rust code: remember the derive attribute we used to derive Debug for our struct in an earlier chapter.
+** A test is a function that's annotated with the 'test' attribute.
+** When we use assert_eq and assert_ne!, the values we use must implement the PartialEq and Debug traits.
+** Use #[ignore] to ignore some tests unless specifically requested.
+** Unit test approach is to put them together with the same code they're testing, in a module named tests, which is annotated with #[cfg(test)]
+** The cfg means to compile the code, only in the test configuration.
+** Other languages usually make it impossible to difficult private methods. But Rust doesn't. This is because of Rust's module rules. If we put test code in the child module of the parent module, we will be able to access the private functions.
+** Even for binary projects, it usually makes sense to put all code in the lib crate that can be integration tested, and then call the code from the main function directly.
