@@ -279,3 +279,21 @@ let slice: &[i32] = &a[1..3];
 ** The cfg means to compile the code, only in the test configuration.
 ** Other languages usually make it impossible to difficult private methods. But Rust doesn't. This is because of Rust's module rules. If we put test code in the child module of the parent module, we will be able to access the private functions.
 ** Even for binary projects, it usually makes sense to put all code in the lib crate that can be integration tested, and then call the code from the main function directly.
+* FP Concepts in Rust
+** Closures
+*** In Scala, a lamba without type annotations will not compile at all. In Rust, the closure gets its types on first use and retains them. Any further use with different types will not compile.
+*** Each closure instance has its own unique anonymous type: i.e. even if two closures have the same signature, their types are still considered to be different.
+*** Instead of re-evaluating the closure each time, we can choose to hold the closure and the output value in a Struct, such that it is only evaluated the first time it is called and cached on further calls. Obviously this is memoization or lazy evaluation.
+*** Closures can capture values from their environment in three ways. which are the same three ways a function can take paramaters: taking ownership, borrowing immutably, and borrowing mutably.
+**** FnOnce takes ownership and moves the variables into the closure. Therefore, it can be called only once in the same context.
+**** Fn borrws values from its environment immutably.
+**** FnMut can change the environment since it mutably borrows values. (??? -> Needs more investigation.)
+*** If we want to force a closure to take ownership, we can do so by using 'move' before the arguments list. This is useful when passing a closure to a new thread.
+** Iterators
+*** Rust iterators are lazy. They have no effect until we call some action that consumes them.
+*** Check out why Rust iterator trait uses type alias for item, instead of generics.
+*** By default, when we call .iter on a collection, we get an iterator that returns immutable references to the values.
+*** If we wanted owned values, then we should call the into_iter method. If we wanted mutable references, we can call iter_mut.
+*** Methods that call the next method are called /consuming adaptors/, since they use up the iterator. A good example would be sum.
+*** Methods that produce other iterators are called /iterator adaptors/.
+*** According to their benchmark, the iterator version is faster than writing your own for loop. This is because iterators are one of Rust's /zero-cost abstractions/. This means that we incur no runtime overhead by using them. This is the same as Stroustrup's /zero-overhead/.
