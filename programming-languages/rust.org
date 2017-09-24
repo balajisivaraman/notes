@@ -297,3 +297,9 @@ let slice: &[i32] = &a[1..3];
 *** Methods that call the next method are called /consuming adaptors/, since they use up the iterator. A good example would be sum.
 *** Methods that produce other iterators are called /iterator adaptors/.
 *** According to their benchmark, the iterator version is faster than writing your own for loop. This is because iterators are one of Rust's /zero-cost abstractions/. This means that we incur no runtime overhead by using them. This is the same as Stroustrup's /zero-overhead/.
+* Cargo
+** dev, release, test and doc -> Pretty self-explanatory. We can customise them by using [profile.*] tags in Cargo.toml files.
+** Documentation comments use /// instead of // and allow embedding markdown syntax in them. Code examples must be wrapped within ``` blocks.
+** //! comments are typically usd to document the crate or the module, found in lib.rs or mod.rs.
+** Use pub::use to re-export your internal stuff to the outside world conveniently.
+** A cargo workspace is a set of packages that will all share the same Cargo.lock and output directory.
