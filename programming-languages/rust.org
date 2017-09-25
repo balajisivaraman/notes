@@ -303,3 +303,44 @@ let slice: &[i32] = &a[1..3];
 ** //! comments are typically usd to document the crate or the module, found in lib.rs or mod.rs.
 ** Use pub::use to re-export your internal stuff to the outside world conveniently.
 ** A cargo workspace is a set of packages that will all share the same Cargo.lock and output directory.
+* Smart Pointers
+** Introduction
+*** Rust's references are data structures that act like a pointer, but also have additional metadata and capabilities, such as reference counting.
+*** The difference between plain references and smart pointers is that references are a kind of pointer that only borrow data; but smart pointers own the data they point to.
+*** In a certain sense, String and Vectors are smart pointers, because they both know additional information about the data they hold such as their length and the fact that String data will always be valid UTF-8.
+*** All smart pointers need to implement the Deref and Drop traits.
+** Box
+*** Allows putting data on a heap and has a known fixed size.
+*** When a boxed value goes out of scope, deallocation happens for both the box (stored on the stack) and the data it points to (stored on the heap).
+*** In a recursive type like Cons list, Rust cannot figure out how much space is to be allocated.
+*** In contrast, if we use a Box type, the it needs only fixed space to be allocated. This is because Box is always a pointer that takes up usize amount of space. The heap data can be of any size, but the address to the start of that heap data will always fit in a usize.
+** Deref
+*** This trait allows us to override '*', the dereference operator. Overriding this for smart pointers makes accessing the data behind the smart pointer convenient.
+*** When dereferencing a reference, it is straightforward, since there's only one value the reference is pointing to. Smart pointers contain metadata also, so when we dereference, we only wane the data and not the metadata. So we override the * for this, by implementing the Deref trait.
+*** With this trait, the compiler knows that types implementing it have a deref method that returns a reference.
+*** The reason deref returns a reference is because of ownership. If it returned a value directly, then that would be moved out of self, and we don't want that in most cases where we use the dereference operator.
+*** When we do *some_value, Rust replaces it as *(some_value.deref()). This happens once for each * operator.
+*** A deref coercion will automatically convert a reference to any pointer into a reference to that pointer's contents. This happens when the reference type of the argument passed into the function differs from the reference type of the parameter defined in that function's signature.
+** Drop
+*** This lets us run some code when a value is about to go out of scope.
+*** We can use std::mem::drop() to drop a value earlier than it goes out of scope, thought this is usually unnecessary.
+*** The above function can take any type T and does nothing in its body. But it's useful because it takes ownership of the value passed and that value automatically goes out of scope at the end of the function, so Rust calls drop for us. It's magic!
+** Reference Counting
+*** This means keeping track of the number of references to a value in order to know if it is still in use or not. If there are zero references, we know we can cleanup the value without any references becoming invalid.
+*** Rc<T> is for when we want to allocate data on the heap for multiple parts of our program to read, but we don't know which part will finish using it last. If we did, we can make that part the owner of the data and be done with it.
+*** Cloning an Rc<T> increases the reference count
+*** Rc<T> only allows us to have immutable references to the T value contained within.
+** Refcell and the Interior Mutability Pattern
+*** Interior mutability is a design pattern in Rust that allows you to mutate data even though there are immutable references to it, which would normally be disallowed by the borrowing rules.
+*** We use unsafe code when we can ensure that the borrowing rules will be enforced at runtime, even when we can't enforce them at compile time.
+*** References and Box<T> enforce borrowing rules at compile time. Failure results in a compile time error. Refcell<T> enforces them at runtime. Failure results in a panic!.
+*** Refcell is useful when we know the borrowing rules are enforced, but the compiler, being more conservative, cannot be sure.
+*** We use the borrow() and borrow_mut() functions on RefCell to get mutable and immutable references. These can be passed to any function that expects these types as per normal.
+*** If we create two mutable references normally, we get a compile time error. If we do two borrow_mut() on a Refcell, we get a runtime panic.
+*** Important: Checking borrowing rules in a running program has performance penalties.
+*** We can combine Rc and Refcell to create a reference that is reference counted but also mutable.
+** Safety of Smart Pointers
+*** Preventing memory leaks is not one of Rust's guarantees. It does not make it impossible.
+*** Weak<T> is a way to reference an Rc<T> that does not increment strong_count, instead it increments weak_count. When the Rc goes out of scope, it is dropped if it's strong_count is 0, even it it's weak_count is not 0.
+*** To get a value out of a Weak, we have to upgrade it to an Option using the upgrade method. If the Rc hasn't been dropped, we'll get a Some. If it has, we'll get a None.
+*** When we do, '*leaf.parent.borrow_mut() = Rc::downgrade(&branch)', this increases branch's weak count to 1, since leaf has a weak reference to it, and not the other way round. Need to read up more on this.
