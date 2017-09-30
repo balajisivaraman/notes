@@ -377,3 +377,19 @@ let slice: &[i32] = &a[1..3];
 *** Sync trait indicates that a type is safe to have references from multiple threads. A type T is Sync if &T is Send, so that the reference can be sent safely to another thread.
 *** Most primitives are also Sync and any type composed entirely of Sync types is also Sync.
 *** Both of these are marker traits, like Serializable in Java.
+* OO Features in Rust
+** If we think of it, enums and structs can be considered as OO, since the definitions contain the data and the impl contain the methods that operate on that data.
+** We can provide encapsulation and data hiding by ensuring the fields are marked private, and the only way to modify them is using the public methods in the impl.
+** There is no way for one struct to inherit another struct's fields. Thus it does not have inheritance in the traditional sense.
+** A trait object is a trait behind some sort of a pointer, such as a & reference or a Box<T> smart pointer.
+** Enums and Structs cannot be called objects in the traditional sense, since the data and the operations are separated from each other. In this sense, Trait Objects can be called objects. However, trait objects don't allow us to add data to it.
+** A trait defines behaviour we need. We can then use it as a trait object in places where we would use a concrete type or a generic type. The type system will ensure that any value we substitute for the trait object will implement methods on the trait.
+** As we already know, if we use generics, the compiler inlines the generic implementations with the concrete type during compilation. So the code is actually doing static dispatch, leading the very fast runtime performance.
+** If we use Trait Objects, Rust cannot perform these optimisations since it can't know all possible types that can come up. It keeps track of the code that could be called and the dispatches the call appropriately.
+** Not all traits can be made into trait objects. Only object-safe traits can. A trait is object safe if:
+*** The trait does not require Self to be Sized
+*** All of the trait's methods are object safe
+** Self is a keyword that is an alias for the type that we're implementing traits or methods on.
+** Sized is a marker trait like Send or Sync. It is automatically implemented on types that have a known size at compile-time (i32 and references). Types that don't have a known size include slices ([T]) and trait objects.
+** Sized is an implicit trait bound on all generic type parameters by default. Most useful operations in Rust require a type to be Sized. We can opt out of this by specifying T: ?Sized.
+** Traits have the above opt-in by default.
