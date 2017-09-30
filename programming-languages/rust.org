@@ -1,4 +1,4 @@
-#+TITLE: Notes from Rust Introduction Tutorial
+ #+TITLE: Notes from Rust Introduction Tutorial
 #+EMAIL: balaji AT balajisivaraman DOT com
 #+AUTHOR: Balaji Sivaraman
 #+LANGUAGE: en
@@ -344,3 +344,36 @@ let slice: &[i32] = &a[1..3];
 *** Weak<T> is a way to reference an Rc<T> that does not increment strong_count, instead it increments weak_count. When the Rc goes out of scope, it is dropped if it's strong_count is 0, even it it's weak_count is not 0.
 *** To get a value out of a Weak, we have to upgrade it to an Option using the upgrade method. If the Rc hasn't been dropped, we'll get a Some. If it has, we'll get a None.
 *** When we do, '*leaf.parent.borrow_mut() = Rc::downgrade(&branch)', this increases branch's weak count to 1, since leaf has a weak reference to it, and not the other way round. Need to read up more on this.
+* Fearless Concurrency
+** Threads
+*** Many PLs provide lightweight or green threads. They take a number of green threads and execute them in the context of a number of OS threads.
+*** The model where a language directly calls the OS API to create threads is called 1:1.
+*** The green threaded model is called the M:N model, M green threads per N OS threads, where they're not necessarily the same number.
+*** Rust's primary concern is with keeping the runtime binary as small as possible. The green threading model results in a significantly larger runtime. So Rust only provides an implementation of the 1:1 threading model.
+*** thread::spawn returns a new JoinHandle. This is a owned value that can wait for a thread to finish, which is what the join method does.
+*** When we call join, that's blocking. The main thread waits for the processing inside the thread to complete before continuing.
+*** When a closure captures a value, Rust will best try to infer how to capture it. If all it needs is a reference in the new thread, it cannot, because we don't know how long the thread will live for. The thread may outlive the borrowed value's lifetime.
+*** By putting 'move' before a closure, we force it to take ownership of any captured value. Of course, this means the value can no longer be used once it is passed into the closure.
+** Message Passing
+*** Channel is the primary tool that enables us to do message passing. It has two halves, a transmitter and a receiver.
+*** mpsc::channel creates a tuple where the first element is the sending end and the second element is the receiving end. MPSC stands for multiple producer, single consumer.
+*** tx.send returns a Result, because if the receiving thread has already stopped, then there's nowhere to send to. So the error needs to be handled.
+*** rx.recv() will block execution until a value is sent down the channel.
+*** tx.send takes ownership of its parameter and moves the value so that its now owned by the receiver.
+*** The rx channel can itself be treated as an iterator.
+*** We can create multiple producers by cloning the tx part of the channel.
+** Shared State Concurrency
+*** Mutexes allow only one thread to access a data at any given time. They're hard for the following reasons:
+**** You have to remember to acquire the lock before using the data.
+**** Once you're done with the data that's being guarded by the mutex, you have to remember to unlock the data so that other threads can acquire the lock.
+*** Calling the lock method on mutex will block until it's our turn to have the lock. It can also fail if the thread holding the lock panicked.
+*** Mutex<T> is a smart pointer. The call to 'lock' returns a smart pointer called MutexGuard. The latter also implements the Drop trait so we can't possibly forget to release the lock.
+*** We cannot use Rc for reference counting since it's implemented for a single-threaded context. Using it for multiple threads could result in subtle bugs where the count is wrong and lead to memory leaks or dropping a value before we're done with it.
+*** Luckily, there'a type called Arc in std::sync, which is like Rc, but for multiple threads.
+*** Even though a Mutex is immutable, we can mutate the value inside it. Just like Cell, it provides internal mutability.
+*** Rust does not prevent deadlocks where two threads hold locks to a resource the other needs to complete the operation.
+** Extensible Concurrency
+*** Send trait indicates that ownership may be transferred b/w threads. Most std lib types in Rust are Send. One exception is Rc, as we already know. Most primitives are also Send, except Raw Pointers.
+*** Sync trait indicates that a type is safe to have references from multiple threads. A type T is Sync if &T is Send, so that the reference can be sent safely to another thread.
+*** Most primitives are also Sync and any type composed entirely of Sync types is also Sync.
+*** Both of these are marker traits, like Serializable in Java.
