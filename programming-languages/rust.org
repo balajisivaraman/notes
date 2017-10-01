@@ -393,3 +393,103 @@ let slice: &[i32] = &a[1..3];
 ** Sized is a marker trait like Send or Sync. It is automatically implemented on types that have a known size at compile-time (i32 and references). Types that don't have a known size include slices ([T]) and trait objects.
 ** Sized is an implicit trait bound on all generic type parameters by default. Most useful operations in Rust require a type to be Sized. We can opt out of this by specifying T: ?Sized.
 ** Traits have the above opt-in by default.
+* Advanced Features
+** Unsafe Rust
+*** Compiled languages default to the safe option. This means they'll potentially reject completely valid programs. Unsafe Rust exists to give the programmer power to do what they want, but they also need to take responsibility when something goes wrong.
+*** We can do this by using the 'unsafe' keyword and starting a new block that holds the unsafe code, which can be one of the following four actions (or Rust Superpowers):
+**** Dereferencing a raw pointer
+**** Calling an unsafe function or method
+**** Accessing or modifying a mutable static variable
+**** Implementing an unsafe trait
+*** The advantage of having unsafe blocks is that when we get memory safety issues, we need only look in a few places. (This also means we need to ensure most of our unsafe code is as small and contained in one part of our codebase.)
+*** It's often a good idea to enclose unsafe code within a safe abstraction and provide a safe API, like many parts of the Rust stdlib.\
+*** Raw Pointers
+**** Just like references, we can have mutable and immutable raw pointers. Immutable means the pointer cannot be directly dereferenced and assigned to.
+**** We can create them out of existing references. *const creates immutable raw ptrs and *mut creates mutable ones.
+**** We can create them in safe Rust, but we cannot dereference them outside of an unsafe block.
+**** In safe Rust, we cannot have mutable and immutable references to the same data. However, we can create mutable and immutable raw ptrs to the same data. There're no safety checks in this regard, and it could potentially lead to data races.
+*** Unsafe Functions
+**** Big difference is the unsafe key before the fn keyword. The entire body of the function is an unsafe block.
+**** They can only be called inside unsafe blocks, ensuring we know what we're doing.
+*** Creating Safe Abstraction over Unsafe Code
+**** Look at the example in the repo. We get a raw pointer for a slice and use slice::from_raw_parts_mut within an unsafe block to split the slice.
+**** This is a valid use of unsafe and the wrapping function can be called from safe Rust.
+**** This is because we're creating a raw pointer from a valid reference and ensuring the length of the slice is also valid.
+**** In contrast, creating a random address and creating an integer raw pointer and then using from_raw_parts_mut in an unsafe block could cause unexpected behaviour because we don't know what is there in that address and whether it is even a valid i32 value. Don't do this.
+*** extern functions for calling external unsafe code
+**** Enables FFI to functions written in other languages.
+**** 'extern "C"' means Rust has to use the C ABI, which defines how to call the function at the assembly level.
+**** Since calling an external function is always unsafe, it should be done within unsafe blocks, and all guarantees are at the hands of the programmer.
+**** We can also define a function with 'extern "C"' so that it can be called from C. We have the use the #[no_mangle] annotation to tell the Rust compiler not to mangle the name of this function. This does not require unsafe.
+*** Accessing or Modifying a Mutable Static Variable
+**** Global variables are called static in Rust. They are similar to constants and are written in caps snake case.
+**** They must always be annotate with their types, and only references with 'static lifetime can be stored in a static variable.
+**** Accessing immutable static variables is safe since they always have the same address in memory and using the value will access the same data. Constants, on the other hand, are allowed to duplicate their data whenever they are used.
+**** Static variables can also be mutable, making them different to constants. But both accessing and modifying them is unsafe.
+**** Global mutable data is difficult to manage and ensure that there are no data races. This is why Rust considers it to be unsafe.
+*** Unsafe Traits
+**** Can be created by adding the unsafe keyword before a trait.
+**** Very similar to unsafe functions, in that it has some invariant inside it that the compiler cannot verify.
+**** For example, if we want to implement Send and Sync for a type such as raw pointers, Rust compiler will not allow that. We can do that in an unsafe impl provided we take care of the safety aspect of it.
+** Advanced Lifetimes
+*** Lifetime Subtyping
+**** Most of the notes for this are in the example code
+*** Lifetime Bounds
+**** Like Trait bounds, we can specify lifetime bounds on generic type parameters. This is needed when Rust cannot know how long T will live and when it itself could be a reference or hold multiple references with their own lifetimes.
+**** We could also specify a static lifetime bound to indicate that if T contains any references, they must have the 'static lifetime.\
+*** Trait Object Lifetimes
+**** The default lifetime of a trait object is 'static.
+**** If we have &'a X or &'a mut X, then the default is 'a.
+**** If we have a single T: 'a clause, then the default is 'a.
+**** If we have multiple T: 'a-like clauses, then there is no default; we must be explicit.
+** Advanced Traits
+*** Associated Types
+**** They're a way of associating a type placeholder with the trait such that the trait method definitions can use them in their signatures.
+**** If we had iterator as a generic parameter, instead of placeholder, we could implement it multiple times for the same type filling in different concrete types each time. This would mean, each time we used the iterator or called next, we'd have to annotate the type we want.
+**** However, with associated types, we cannot do the above.
+**** Associated types are also better for brevity in some cases, where we don't have to fill in all the generic parameters we may not end up using.
+*** Operator Overloading and Default Type Parameters
+**** The <PlaceholderType=ConcreteType> syntax is used in another way as well: to specify the default type for a generic type. A great example of a situation where this is useful is operator overloading.
+**** RHS is a syntax for default type parameter. Example is as a generic parameter in the Add trait. If we don't provide a concrete type, it will default to the type of Self.
+**** If we want to add a type parameter to an existing trait, but don't want existing implementations to break, we can use default type parameters.
+*** Fully Qualified Syntax for Disambiguation
+**** <Type as Trait>::method(receiver, args) is the syntax. Basically looks like typecasting.
+**** If we only had a method either implemented on the impl or only in one trait, we can use variable.method_name or Trait::method_name, instead. We only need above syntax when the implementations can come from multiple traits.
+*** Supertraits
+**** If we want to say our trait will only work if our implementors also implement another trait, we can use the syntax: trait OurTrait: SuperTrait {} to get the job done. (Reminds me of self types from Scala)
+*** Newtype Pattern
+**** We cannot implement a trait if either the trait or the type isn't local to our crate, known as the orphan rule.
+**** The way to get around this restriction is by creating a "new type" wrapper around the type for which we want to implement the trait.
+**** For instance, we could do 'struct Wrapper(Vec<String>)' and then implement Display trait for Wrapper.
+**** There are no run time penalties since the wrapper type is elided at compile time.
+**** If we want the wrapper types to have all methods of the wrapping type, one solution is to implement the Deref trait to return the inner type. However, if we don't want all the methods, then we need to do the handholding.
+** Advanced Types
+*** Newtypes for Type Safety
+**** We can also use Newtypes as a wrapper around existing types to avoid name clashes. For example, the Millimeters and Meters example in the operator overloading chapter.
+**** Another reason is if we want to provide a different public API than our wrapping type.
+*** Type Aliases
+**** Work pretty much the same way we're already familiar with. No surprises here.
+*** Never Type (!)
+**** In type theory, this is called the empty type. Rust calls it the never type. It stands in place of the return type when a function will never return.
+**** These functions are called diverging functions.
+**** The never type unifies with all other types. This is why we can have a continue or a panic! in a match arm and it will typecheck.
+*** Dynamically Sized Types
+**** These are types whose size we can only know at runtime.
+**** str is a DST.
+#+BEGIN_SRC rust
+let s1: str = "Hello there!";
+let s2: str = "How's it going?";
+ #+END_SRC
+**** In the above example, s1 needs 12 bytes and s2 need 15. This is why it is impossible to create a variable holding a DST, because looking at the variable's type, Rust can never know what kind of memory allocation to do.
+**** While &T stores the memory address of where the T is located (for types with known sizes), &str holds two values: the address and how long it is.
+**** This is how DSTs are generally used in Rust. They have an additional bit of metadata to store the size information. This is also why DSTs must always be behind a pointer of some kind.
+** Advanced Functions and Closures
+*** Function Pointers
+**** Works as expected. We can use fn(i32) -> i32, as an arugment in a function if we want to accept function pointers for a function that takes an integer and returns an integer.
+**** Function pointers also implement the Fn, FnMut and FnOnce traits. So we can pass them in any place where we would pass closures.
+**** In fact, the main reason to use fn type, rather than one of the above traits is when interfacing with code from other languages that don't have closures. We could do this for C code because it can accept fns as args, but doesn't have closures.
+**** We can also use .map(ToString::to_string), instead of .map(|i| i.to_string()) which refer to fn pointers instead of a closure. Reminds me of the Java 8 syntax a lot.
+*** Returning Closures
+**** We're not allowed to use the function pointer fn as a return type. We cannot also use Fn(i32) -> i32 as a return type to indicate that our function returns a closure.
+**** Rust will complain about the return type not implementing the Sized trait, which makes sense since it cannot know how much space it'll need to store the closure.
+**** We need to wrap it in a Box as a trait object if we want to return a closure.
