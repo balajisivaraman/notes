@@ -1,0 +1,80 @@
+#+TITLE: Notes from Borg, Omega, and Kubernetes Paper
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* Basics
+** Initial main benefit of containers as developed at Google was higher resource utilization.
+** Containers provide the resource-management tools that make this possible, as well as robust kernel-level resource isolation to prevent the processes from interfering with one another.
+** You don't get isolation for resources the OS kernel doesn't manager, such as CPU caches.
+** Containers also need an additional security layer (like virtual machines???) to protect against malicious actors in the cloud.
+** The modern container is more than an isolation mechanism - it includes an image, which is the files that make-up the application.
+* Application Oriented
+** Containers abstract away a lot of the details from the developers and deployment infrastructure (Good or Bad???)
+** Your datacenter is now application oriented, instead of being machine oriented.
+** Well designed containers and images encapsulate a single application. So instead of managing physical machines, you're now managing containers.
+** Originally cgroup, chroots etc. were designed to protect applications from noisy, nosey and messy neigbours.
+** Combining that with container images creats an abstraction that isolates apps from OSes they run on. This means you can do easy deployments on different OSes and get the same benefits for local dev envs also.
+** Container image packs all the dependencies of the application so that it can be deployed as a container. If done correctly, the only external dependencies will be on the Linux system-call interface.
+** Google container images statically link binaries to libs at build time. And their host machines have some basic tools installed such as tar and libc.
+* Containers as Units of Management
+** Building management APIs around containers instead of machines shifts the primary key of datacenters from machines to applications.
+** Borg has a /healthz endpoint which reports unhealthy apps to the orchestrator, which are promptly restarted.
+** Kubernetes has a facility to provide health check via a HTTP endpoint or exec command.
+** cgroups provides metadata about a running application, which can be extracted via HTTP APIs. This allows development of auto-scalers and cadvisor for example.
+** This is much better than having to SSH into a VM and run top to see what is happening.
+** Load balancers don't balance machines, they balance applications. Logs are keyed by application, not machines. So they can be easily aggregated.
+** Fundamentally, because the identity of an instance being managed by the container manager lines up exactly with the identity of the instance expected by the application developer, it is easier to build, manage, and debug applications.
+** Although we speak of apps being 1:1 with containers, in reality there are nested containers. The outside one provides a pool of resources, the inner one provides deployment isolation.
+** In Borg, the outermost one is called alloc, in Kubernetes it's called pod. Kubernetes always runs application containers inside a top level pod.
+* Orchestration is the beginning, not the end
+** Many disparate tools were built in the Borg ecosystem in Google to solve different problems.
+*** Service Discovery
+*** Primary selection
+*** Horizontal (no. of instances) and Vertical (instance size) auto-scaling
+*** Rollout and Workflow tools
+** These had idiosyncratic APIs and interacted with Borg in their own ways.
+** Kubernetes averts this complexity with some standardization. Every K8S object has 3 basic fields: ObjectMetadata, Specification (Spec) and Status.
+** The object metadata is the same for all objects: UID, version number (for optimistic concurrency control), and labels.
+** Spec and Status contents differ by object types. Former describes desired state of the object, while the latter provides a read-only current state of the object.
+** Learning from Borg and Omega, K8S is built on top of composable building blocks that can be readily extended by users.
+** Replication controller ensures the existence of a desired number of pods and the auto-scaler uses this capability to simply adjust the desired number of pods.
+** Because all action is based on observation and not a state diagram, reconciliation loops are robust to failures. A reconciliation controller that failed can simply pick up where it left off.
+** The design of Kubernetes as a combination of microservices and small control loops is an example of control through choreography.
+** This is a conscious design choice in contrast to a centralized orchestration system, which may be easier to construct at first but tends to become brittle and rigid over time, especially in the presence of unanticipated errors or state changes.
+* Lessons learned from Borg and Omega
+** Don't make the container system manage port numbers
+*** All containers in a Borg machine got the host's IP address. They got different ports when they were moved or restarted. This made traditional resolving mechanisms such as DNS a nightmare.
+*** From this learning, they decided that every pod in K8S will get an IP address. This aligns network identity with application identity.
+** Don't just number containers, give them labels
+*** Borg had jobs to group together identical tasks (its name for containers).
+*** These were put in a compact vector indexed sequentially from zero. This meant that when tasks failed, the index did double work of keeping track of the new task and retaining the old task for debugging purposes.
+*** Borg also provided no easy way to add application relevant metadata to a job, such as a role (frontend) or a rollout status (canary). So people encoded this info into job names and decoded using regexes.
+*** K8S uses labels to identify groups of containers. A pod might have the lables role=frontend and stage=production. Sets of objects are defined by label selectors.
+*** Sets selected using labels can overlap. Label queries are the primary grouping mechanism in K8S and form the base of all management operations that span multiple entities.
+** Be careful with ownership
+*** In Borg, all tasks were grouped into jobs. This meant that they were created and destroyed together. But the major drawback was that there was only one grouping mechanism.
+*** In contrast, in K8S, pod lifecycle management components such as Replication Controllers determine which pods they are responsible for using label selectors.
+*** This could lead to multiple components thinking they have rights over the pods. This is managed using appropriate configuration mechanisms.
+*** The advantage is that it is possible to "orphan" and "adopt" containers. For eg: if a load-balanced service finds a misbehaving pod, it can delete the label associated with it. This means the pod remains active for in situ debugging. But because the replication controller will detect a missing replica, it will recreate it.
+** Don't expose raw state
+*** Key difference between Borg, Omega and Kubernetes is in their API architectures.
+*** The BorgMaster is a monolith that knows the semantics of every API operation.
+*** In contrast, Omega has no centralised component except the store, which simply holds passive state information and enforces optimistic concurrency control. All logic is with the store clients.
+*** K8S provides a middle ground that provides the flexibility and scalability of Omega's model, while enforcing system-wide invariants, policies and data transformations.
+*** This is done by enforcing all store access through a centralized API server, which takes care of handling the policies and invariants. But like Omega, clients can evolve independently, which is needed in the OSS environment.
+* Problems that need solving
+** Configuraion
+*** This is the biggest problem across all 3 systems.
+*** To cope up with the problem, people typically invent a configuration DSL, which eventually becomes turing complete. This unfortunately results in configuration as code, which people try to avoid.
+*** The solution is to specify data in a JSON or YAML format and use another proper programming language to bind the computation and the data.
+** Dependency Management
+*** Standing up a service means also standing up associated dependent services, such as monitoring, logging, CI/CD.
+*** Wouldn't it be nice if starting a service meant automatically starting up the dependencies?
+*** But it won't be as simple as starting up a new instance of the dependecy, because it might expect parameters such as authentication/authorization for billing information etc. (I think of this as providing a pod access to only the other pods on which it depends and nothing else.)
+*** But determining the dependency graph automatically is a problem, while relying on developers to specify it means stale or outdated info, if it is not updated properly. (I might specify a dependency that I no longer need.)
