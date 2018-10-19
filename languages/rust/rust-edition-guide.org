@@ -1,0 +1,82 @@
+#+TITLE: Notes from Rust Edition Guide
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* What are editions?
+** A mechanism for packaging Rust changes once every 2-3 years
+** Editions are usually compatible with each other: for example, if you're using Rust 2015 and one of you deps use 2018, it works fine. Same with the opposite.
+** Editions might have incompatible changes such as new keywords or turning warnings into errors. The edition usually supports all previous ones.
+** For features such as new keywords or some other reasons, you'll have to update to a new edition to pull them in.
+** try, async, await are new keywords in 2018 not available in 2015.
+** cargo fix --edition -> New cargo subcommand is available to attempt automatic fixing. Requires that new edition not be enabled in Cargo.toml
+** New idioms are introduced with new edition. There's a new subcommand cargo fix --edition-idioms to attempt to update idioms.
+** You can't update to Rust 2015. It's the default. It began with Rust 1.0 in 2015. It's theme is "stability".
+** The edition system was created for Rust 2018. It's theme is "productivity".
+* Module system
+** Raw Identifiers - Allows you to use Rust keywords in places not normally allowed by prepending 'r#' to it.
+*** Mainly needed for inter-edition situations. New keywords added in new editions, while they're used elsewhere in older editions.
+*** async, await and try (replacement for do...catch) are the new keywords in 2018 that could get use from this.
+** Path Clarity (Must talk about this!)
+*** No more extern crate (if you're aliasing crates, then you need `use futures as f`)
+*** crate keyword refers to current crate (For eg: crate::foo::bar refers to bar inside foo module of current crate. ::foo::bar refers to bar in external crate foo)
+*** All paths must begin with crate name, crate, self or super.
+**** The path declarations are the same everywhere in Rust 2018. Look at great example [[https://rust-lang-nursery.github.io/edition-guide/rust-2018/module-system/path-clarity.html#changes-to-paths][here]].
+**** Note this line in the guide, written especially for me: "With std it can be even more confusing, as you never wrote the extern crate std; line at all."
+*** mod.rs not needed for placing submodules in a directory. foo.rs and foo/ folder can coexist. You can put bar submodule in foo/bar.rs now without issues.
+*** With uniform paths, unless there are name conflicts, you can refer to names in modules the same everywhere.
+** Visibility Modifiers
+*** You get pub(crate) and pub(in a::b::c). Former to make it available in crate, but not externally. Latter to make it available to one other module.
+** Nested Imports - Fairly self explanatory ergonomic and readability improvement
+* Error Handling and Panics
+** We already know the amazing uses of the ? operator
+** We already know that you can now use ? with main and test. This is backed up by a new Termination trait that all possible return types of main should implement.
+** Panics normally unwind the stack of the thread that panicked running all destructors but nothing else. This provides a sane isolation boundary that means other threads continue to run unless they try to contact the panicked thread.
+** catch_unwind (paired with resume_unwind) is a new API that introduces new isolation boundaries within a thread.
+** You can also choose to "abort" instead of unwind. This results in a smaller binary but you lose panics. So make the choice.
+* Control Flow
+** Loops can break with a value, which means they're expressions now. (Not true of while and for, maybe added in the future)
+** Initial Rust 2018 doesn't add async, await, but they'll be added in a future release.
+* Trait System
+** impl Trait
+*** Doing <T: Trait> means your users turbofish syntax like `foo::<usize>(1)`. You can't do this with impl Trait. So it could constitute breaking changes.
+*** Note this line: With impl Trait, you're saying "hey, some type exists that implements this trait, but I'm not gonna tell you what it is.". So now, the caller can't choose, and the function itself gets to choose.
+** dyn Trait
+*** It provides nice symmetry with impl Trait. This mean dynamic versus static dispatch for impl Trait.
+** Traits now have associated constants. What's even better is they can be defined with no value and overridden by implementors.
+** Trait method declarations can no longer have anonymous method parameters.
+* Slice Patterns - Fairly Obvious feature we already know about
+* Ownership and Lifetimes
+** Non Lexical Lifetimes
+*** For example, you borrow and the variable is unused in the scope. The following borrow is allowed in Rust 2018. This is because lifetimes followed "lexical scope" in older editions.
+*** Borrow errors point out use of variable instead of the place where the variable goes out of scope.
+** Default Match Bindings - Automatic dereferncing in match case statements.
+** Anonymous Lifetimes
+*** - '_ can be used to indicate a lifetime that is elided in places where it might otherwise be unclear.
+*** Each _ is replaced with a new lifetime variable, like in Scala
+** Lifetime Elision has been improved for more scenarios
+** 'static lifetimes for const are automatically inferred. Remember your ripgrep change for decompressor.
+* Data Types
+** Field init shorthand - Don't need to write out variables with same names as fields in Struct inits
+** ..= inclusive ranges.
+** union types similar to Enums but unsafe. Can be useful for interop with C apis. Must only include Copy types and can't implemend Drop.
+* Macros
+** Custom Derives - Need to see more
+** You can now import macros like other elements. (Only external macros, internal ones still need macro_use.)
+** You can now import procedural macros like Serde Serialize and Deserialize also
+* Compiler
+** Improved Error Messages - Since Rust 1.12, so not a major deal
+** Incremental Compilation as of Rust 1.24, combine with cargo check for maximum speed
+** Deprecated attribute to show deprecation of APIs.
+* Cargo & Crates.io
+** cargo check introduced in Rust 1.16 - Just compiles and doesn't build
+** cargo examples - Multi-files feature - Need to read
+** cargo patch lets you patch out dependencies
+*** Very useful when doing local testing where one of your dependencies has a bug. You can fix it and see whether it works with patch.
+* Documentation
+** cargo doc - Doc tests can now have a compile fail flag
