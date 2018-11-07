@@ -1,0 +1,23 @@
+#+TITLE: Notes from Writing High-Performance .Net Code
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* Introduction
+** Often, the performance problems developers blame on .NET are actually due to poor coding patterns and a lack of knowledge of how to optimize their programs on this framework.
+** If high availability is your goal, then you are going to need to be concerned about JIT compilation to some degree.
+** Do you have an extensive type system? Interface dispatch might be a concern.
+** There are many unfortunate stereotypes in this world. One of them, sadly, is that managed code cannot be fast. This is not true.
+** It is much more common to run across code, managed or native, that is in reality just poorly written code; e.g., it does not manage its memory well, it uses bad patterns, it defies CPU caching strategies or is otherwise unsuitable for good performance.
+** .Net Core contains a host of perf improvements in collections, LINQ, general web serving etc. and should be the defacto standard going forward.
+* Performance Measurement and Tools
+** It is very difficult to fix a poorly written application retroactively if it has a fundamentally flawed architecture from an efficiency perspective.
+** Micro-optimizing code that does not significantly contribute to overall inefficiency is largely a waste of time.
+** Index of Percentile of sorted list is: 0.01 * P * N, where P is the percentile you want and N is the length of the list
+** Percentiles give you an indication of the performance degradation that can occur for the last x% of your users, and tracking it can be really useful, but we also need to be cognizant of law of diminishing returns.
+** You need to decide on sample set size to make effective use of percentiles. In general, consider errors to be square root of sample set size. 10% for 100 samples, approximately 3% (30 errors) for 1000 samples.
