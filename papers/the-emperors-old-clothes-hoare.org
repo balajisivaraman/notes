@@ -1,0 +1,108 @@
+#+TITLE: Notes from The Emperor's Old Clothes - Tony Hoare
+#+EMAIL: balaji AT balajisivaraman DOT com
+#+AUTHOR: Balaji Sivaraman
+#+LANGUAGE: en
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage{amssymb, amsmath, mathtools, fullpage, fontspec}
+#+LATEX_HEADER: \renewcommand*{\familydefault}{\sfdefault}
+#+LATEX_HEADER: \setsansfont{Verdana}
+#+LATEX: \newpage
+* My first task was to implement for the new Elliott 803 computer, a library subroutine for a new fast method of internal sorting just invented by Shell.
+* I greatly enjoyed the challenge of maximizing efficiency in the simple decimal-addressed machine code of those days.
+* Design prog lang for the Elliott 503, which was to have the same instruction code as the existing 803 but run sixty times faster.
+* Gets a copy of Report on the International Algorithmic Language ALGOL 60, which he considers to be too complicated for his customers. (Makes fun that even their salesmen couldn't understand it.)
+* Attended a course on ALGOL 60 in 1961, taken by Naur, Dijkstra and Landin. Learns about recursive procedures and writes the procedure, which he calls Quicksort. Of course, this is where he begins his career as a scientist.
+* Credits ALGOL 60 for recursion, which is what makes quicksort such a beautiful algorithm.
+* QUOTE: *I have regarded it as the highest goal of programming language design to enable good ideas to be elegantly expressed.*
+* On drive back from course, one of his colleagues suggests implementing ALGOL 60 instead of designing a new language. He derives a subset of ALGOL 60 with some basic principles instead.
+* Principles
+** SECURITY
+*** Every syntactically incorrect program should be rejected and every syntactically correct program should give a result or an error message that is predictable and comprehensible in the source language program itself.
+*** A consequence of this principle is that every occurrence of every subscript of every subscripted variable was on every occasion checked at run time against both the upper and the lower declared bounds of the array.
+*** I note with fear and horror that even in 1980, language designers and users have not learned this lesson. (Neither have they in 2018.)
+** BREVITY OF OBJECT CODE AND COMPACTNESS OF RUN-TIME WORKING DATA
+*** The size of main storage on any computer is limited and its extension involves delay and expense.
+*** QUOTE: *If as a result of care taken in implementation the available hardware remains more powerful than may seem necessary for a particular application, the applications programmer can nearly always take advantage of the extra capacity to increase the quality of his program, its simplicity, its ruggedness, and its reliability.*
+** FUNCTION/PROCEDURE ENTRY/EXIT CONVENTION SHOULD BE COMPACT AND EFFICIENT
+*** The efficiency should match that of machine-code subroutines. Hoare reasoned that functions/procedures are very useful for readability and there should be no impediments to their use.
+** COMPILER SHOULD BE SINGLE-PASS
+*** Compiler was structured as a stack of mutually recursive procedures, each capable of analysing and translating a syntactic unit of the language (statement, expression etc.)
+*** It was coded into decimal machine code using an explicit stack for recursion. With ALGOL 60's idea of recursion, the compiler wouldn't have been possible.
+** I can still recommend single-pass top-down recursive descent both as an implementation method and asa design principle for a programming language.
+*** People prefer to read programs in a single-pass. Compilers should mirror this.
+*** The time between typing and starting to run is wholly unproductive. Single-pass compilers reduce this as much as possible.
+*** Finally a compiler's structure should mirror the language's syntax, thereby ensuring correctness.
+* To ensure these principles, a small subset of ALGOL 60 was selected. But by the end, they'd almost coded the entire specification, while restricting and removing some features not meeting these principles.
+* They doubted whether customers were even using their compiler because no complaints were filed. Their customers have now moved on to better languages, but they still remember their implementation fondly: Not because of nostalgia but to the efficiency, reliability, and convenience of that early simple ALGOL System
+* Takes charge of Working Group 2.1 to design a subset of Algol that removes some of its less successful features.
+** QUOTE: *Even in those days and even with such a simple language, we recognized that a subset could be an improvement on the original.*
+** Dismayed at the heat and rancor of discussions on the language.
+* Language designers meet to suggest on feature they could add to the language
+** Hoare suggests: "Relax the ALGOL 60 rule of compulsory declaration of variable names and adopt some reasonable default convention such as that of FORTRAN."
+** Others suggested that this was the best protection against programming and coding errors which could be extremely expensive to detect in a running program and even more expensive not to.
+** The story of the Mariner space rocket to Venus, lost because of the lack of compulsory declarations in FORTRAN, was not to be published until later.
+** I was eventually persuaded of the need to design programming notations so as to maximize the number of errors which cannot be made, or if made, can be reliably detected at compile time.
+** switch lets you create an array of GOTOs that you can refer to using *go to*. This is quite an evil idea that was discontinued because it made program behaviour unpredictable.
+** To make matters worse, one suggestion was to let programmers assign to the switch at runtime. *TRULY EVIL!*
+** I was also beginning to suspect that programs that used a lot of labels were more difficult to understand and get correct and that programs that assigned new values to label variables would be even more difficult still. True that Sir Tony!
+** So I suggested the notation for a "case expression" which selects between any number of alternatives according to the value of an integer expression. That was my second language design proposal. I am still most proud of it, because it raises essentially no problems either for the implementor, the programmer, or the reader of a program.
+** AND THUS THE CASE STATEMENT IS BORN!
+* Elliott 503 Mark II software system
+** Comprised of below things
+*** An assembler for a symbolic assembly language in which all the rest of the Software was to be written.
+*** A scheme for automatic administration of code and data overlays, either from magnetic tape or from core backing store. This was to be used by the rest of the software.
+*** A scheme for automatic buffering of all input and output on any available peripheral device - again, to be used by all the other software.
+*** A filing system on magnetic tape with facilities for editing and job control.
+*** A completely new implementation of ALGOL 60, which removed all the nonstandard restrictions which we had imposed on our first implementation.
+*** A compiler for FORTRAN as it was then.
+** Deadline of March 1965 (from Oct 1963). Sir Tony becomes Assistant Cheif Engineer.
+** Delay led to delivery date of June 1965.
+** Sir Tony takes charge and new estimate of 3 months is given. He doesn't believe it.
+** QUOTE: *It turned out that we had failed to make any overall plans for the allocation of our most limited resource - main storage.*
+** Each programmer believed this would be done automatically by one of the components, and also failed to account for the size of their software, which filled up a lot of space.
+** And "Hardware address length limitations prohibited adding more main storage."
+** Decision taken to just deliver new ALGOL 60 compiler in 4 months. Programmers worked day and night to deliver their first working software in over 2 years.
+** FAILURE
+*** Compiler operated at 2 words per second because of going between primary and secondary backing store, which was much slower.
+*** They worked and made it double the speed a few times (up to 4 and 8).
+*** The alternative of increasing the size of the main store so frequently adopted in later failures of this kind was prohibited by hardware addressing limitations.
+*** There was no escape: The entire Elliott 503 Mark II software project had to be abandoned, and with it, over thirty man-years of programming effort, equivalent to nearly one man’s active working life, and I was responsible, both as designer and as manager, for wasting it.
+*** QUOTE: *Over lunch our customers were kind to try to comfort me. They had realized long ago that software to the original specification could never have been delivered, and even if it had been, they would not have known how to use its sophisticated features, and anyway many such large projects getcancelled before delivery. In retrospect, I believe our customers were fortunate that hardware limitations had protected them from the arbitrary excesses of our software designs. In the present day, users of microprocessors benefit from a similar protection - but not for much longer.*
+*** Learnt of OS360, which also ended up in failure.
+*** Senior manager shouted at him: I was surprised that he had even heard of me. "You know what went wrong?" he shouted - he always shouted - "You let your programmers do things which you yourself do not understand."
+*** Key point in discussion on grievances: *Interference from higher managers who imposed decisions, "...without a full realization of the more intricate implications of the matter," and overoptimism in the face of pressurefrom customers and the Sales Department.*
+*** QUOTE: *For example, we admitted that it was the duty of programmers to educate their managers and other departments of the company by "...presenting the necessary information in a simple palatable form."*
+*** QUOTE: *The hope "that deficiencies in original program specifications could be made up by the skill of a technical writing department . . . was misguided; the design of a program and the design of its specification must be undertaken in parallel by the same person, and they must interact with each other. A lack of clarity in specification is one of the surest signs of a deficiency in the program it describes, and the two faults must be removed simultaneously before the project is embarked upon."*
+*** I wish I had followed this advice in 1963; I wish we all would follow it today. (Curiously, this is the problem TDD tried to solve. And very successfully, might I add!)
+*** Our main failure was overambition. QUOTE: *We failed in giving clear and stable definitions of the responsibilities of individual programmers and project leaders - Oh, need I go on? What was amazing was that a large team of highly intelligent programmers could labor so hard and so long on such an unpromising project.*
+*** The last section of our inquiry into the failure dealt with the criteria of quality of software. -> This resulted in a list of 17 criteria which was published in a guest editorial in Volume 2 of Software Practice and Experience. (https://onlinelibrary.wiley.com/doi/epdf/10.1002/spe.4380020202)
+* RECOVERY
+** Customers grouped into categories (all magnetic tapes in one group etc.)
+** Each group gets a team leader. They visit customer to find what they want. They make plans, but no promises.
+** They don't undertake any implementation that will take longer than 3 months to deliver.
+** Above all, I did not allow anything to be done which I did not myself understand. It worked!
+* After success: I did not see why the design and implementation of an operating system should be so much more difficult than that of a compiler.
+* This is the reason why I have devoted my later research to problems of parallel programming and language constructs which would assist in clear structuring of operating systems - constructs such as monitors and communicating processes.
+* Formal Definiton of Programming Languages
+** At that time, Peter Landin and Christopher Strachey proposed to define a programming language in a simple functional notation, that specified the effect of each command on a mathematically defined abstract machine.
+** Hoare felt programming language definition should be formalized as a set of axioms, describing the desired properties of programs written in the language.
+** Publishes paper on axiomatic approach to computer programming in the ACM in 1969.
+** QUOTE: *Just recently, I have discovered that an early advocate of the assertional method of program proving was none other than Alan Turing himself. On June 24, 1950 at a conference in Cambridge, he gave a short talk entitled, "Checking a Large Routine" which explains the idea with great clarity. "How can one check a large routine in the sense of making sure that it’s right? In order that the man who checks may not have too difficult a task, the programmer should make a number of definite assertions which can be checked individually, and from which the correctness of the whole program easily follows."*
+* ALGOL-W in 1965
+** Niklaus Wirth was brought in to consolidate all suggestions, and eventually ALGOL-W paper published in 1965. This was worthy predecessor to Pascal.
+** ALGOL committee proposed an alternative, something Hoare considered unattractive. But the best PL minds chose it over their draft.
+** QUOTE: *I conclude that there are two ways of constructing a software design: One way is to make it so simple that there are obviously no deficiencies and the other way is to make it so complicated that there are no obvious deficiencies.*
+** QUOTE: *The first method is far more difficult. It demands the same skill, devotion, insight, and even inspiration as the discovery of the simple physical laws which underlie the complex phenomena of nature. It also requires a willingness to accept objectives which are limited by physical, logical, and technological constraints, and to accept a compromise when conflicting objectives cannot be met. No committee will ever do this until it is too late.*
+** After multiple rounds of discussions, the working group had a complex document on their hands, which they wanted to implement.
+** QUOTE: *In vain, I told them it would not. In vain, I urged them to remove some of the technical mistakes of the language, the predominance of references, the default type conversions. Far from wishing to simplify the language, the working group actually asked the authors to include even more complex features like overloading of operators and concurrency.*
+** QUOTE: *When any new language design project is nearing completion, there is always a mad rush to get new features added before standardization. The rush is mad indeed, because it leads into a trap from whichthere is no escape. A feature which is omitted can always be added later, when its design and its implications are well understood. A feature which is included before it is fully understood can never be removed later.*
+** QUOTE: *Programmers are always surrounded by complexity; we cannot avoid it. Our applications are complex because we are ambitious to use our computers in ever more sophisticated ways. Programming is complex because of the large number of conflicting objectives for each of our programming projects. If our basic tool, the language in which we design and code our programs, is also complicated, the language itself becomes part of the problem rather than part of its solution.*
+* Flevel Language
+** In the parts that had been implemented, the flowers had withered; they were choked by an undergrowth of explanatory footnotes, placing arbitrary and unpleasant restrictions on the use of each feature and loading upon a programmer the responsibility for controlling the complex and unexpected side-effects and interaction effects with all the other features of the language.
+** At first I hoped that such a technically unsound project would collapse but I soon realized it was doomed to success. Almost anything in software can be implemented, sold, and even used given enough determination.
+** But there is one quality that cannot be purchased in this way - and that is reliability. The price of reliability is the pursuit of the utmost simplicity. It is a price which the very rich find most hard to pay.
+* On ADA
+** Gradually these objectives have been sacrificed in favor of power, supposedly achieved by a plethora of features and notational conventions, many of them unnecessary and some of them, like exception handling, even dangerous. We relive the history of the design of the motor car. Gadgets and glitter prevail over fundamental concerns of safety and economy.
+* On Pascal
+* QUOTE: *You include only those features which you know to be needed for every single application of the language and which you know to be appropriate for every single hardware configuration on which the language is implemented. Then extensions can be specially designed where necessary for particularhardware devices and for particular applications. That is the great strength of PASCAL, that there are so few unnecessary features and almost no need for subsets. That is why the language is strong enough to support specialized extensions - Concurrent PASCAL for real time work, PASCAL PLUS for discrete event simulation, UCSD PASCAL for microprocessor work stations. If only we could learn the right lessons from the successes of the past, we would not need to learn from our failures.*
